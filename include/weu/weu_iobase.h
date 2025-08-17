@@ -21,7 +21,7 @@
 //  READ
 
 //  returns NULL if file doesn't exist
-WEUDEF string *weu_io_loadText(const char *filePath) {
+WEUDEF weu_string *weu_io_loadText(const char *filePath) {
     FILE *file = fopen(filePath, "r");
     if (file == NULL) return NULL;
 
@@ -29,7 +29,7 @@ WEUDEF string *weu_io_loadText(const char *filePath) {
     int charCount = ftell(file);
     rewind(file);
 
-    string *out = weu_string_newSize(charCount);
+    weu_string *out = weu_string_newSize(charCount);
     for (int i = 0; i < charCount; i++) {
         out->text[i] = getc(file);
     }

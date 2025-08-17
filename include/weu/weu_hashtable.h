@@ -34,17 +34,17 @@ WEUDEF unsigned int weu_hash_FNV(const char *str, unsigned int len) {
     }
     return hash % len;
 }
-WEUDEF unsigned int weu_hash_strFNV(string *str) {
+WEUDEF unsigned int weu_hash_strFNV(weu_string *str) {
     return weu_hash_FNV(str->text, str->length);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  ALLOCATION
 
-WEUDEF hashTable *weu_hashtable_new(unsigned int size, datafreefun d) {
+WEUDEF weu_hashTable *weu_hashtable_new(unsigned int size, datafreefun d) {
     size = size > MIN_TABLE_SIZE ? size : MIN_TABLE_SIZE;
-    hashTable *out = (hashTable*)malloc(sizeof(hashTable));
+    weu_hashTable *out = (weu_hashTable*)malloc(sizeof(weu_hashTable));
     out->length = size;
-    out->data = (hashItem*)malloc(sizeof(hashItem) * size);
+    out->data = (weu_hashItem*)malloc(sizeof(weu_hashItem) * size);
     if (d != NULL) out->d = d; else out->d = NULL;
     for (int i = 0; i < size; i++) {
         out->data[i].inUse = 0;
@@ -53,8 +53,8 @@ WEUDEF hashTable *weu_hashtable_new(unsigned int size, datafreefun d) {
     }
     return out;
 }
-WEUDEF void weu_hashtable_free(hashTable **handle) {
-    hashTable *table = (*handle);
+WEUDEF void weu_hashtable_free(weu_hashTable **handle) {
+    weu_hashTable *table = (*handle);
     for (int i = 0; i < table->length; i++) {
         weu_string_free(&table->data[i].key);
         if (table->d != NULL) table->d(&table->data[i].value);
@@ -64,7 +64,7 @@ WEUDEF void weu_hashtable_free(hashTable **handle) {
     *handle = NULL;
 }
 
-WEUDEF void weu_hashtable_addItem(hashTable *table, string *key, void *value, int freeKeyOnDone) {
+WEUDEF void weu_hashtable_addItem(weu_hashTable *table, weu_string *key, void *value, int freeKeyOnDone) {
     if (table == NULL || key == NULL) return;
     unsigned int hashValue = weu_hash_FNV(key->text, table->length);
     int position = hashValue;
@@ -72,7 +72,7 @@ WEUDEF void weu_hashtable_addItem(hashTable *table, string *key, void *value, in
     {
         if (position >= table->length) position = 0;
         if (weu_string_matches(table->data[position].key, key)) {
-            printf("Hashtable already contains key - %s\n", key->text);
+            printf("weu_hashTable already contains key - %s\n", key->text);
             break;
         }
         if (!table->data[position].inUse) {
@@ -84,7 +84,7 @@ WEUDEF void weu_hashtable_addItem(hashTable *table, string *key, void *value, in
     } while (++position == hashValue);
     if (freeKeyOnDone) weu_string_free(&key);
 }
-WEUDEF void weu_hashtable_removeItem(hashTable *table, string *key, int freeKeyOnDone) {
+WEUDEF void weu_hashtable_removeItem(weu_hashTable *table, weu_string *key, int freeKeyOnDone) {
     if (table == NULL || key == NULL) return;
     unsigned int hashValue = weu_hash_FNV(key->text, table->length);
     int position    = hashValue;
@@ -101,11 +101,11 @@ WEUDEF void weu_hashtable_removeItem(hashTable *table, string *key, int freeKeyO
             break;
         }
     } while (++position != hashValue);
-    if (!containsKey) printf("Hashtable does not conatin key - %s\n", key->text);
+    if (!containsKey) printf("weu_hashTable does not conatin key - %s\n", key->text);
     if (freeKeyOnDone) weu_string_free(&key);
 }
 
-WEUDEF void* weu_hashtable_getValue(hashTable *table, string *key, int freeKeyOnDone) {
+WEUDEF void* weu_hashtable_getValue(weu_hashTable *table, weu_string *key, int freeKeyOnDone) {
     if (table == NULL || key == NULL) return NULL;
     unsigned int hashValue = weu_hash_FNV(key->text, table->length);
     int position    = hashValue;
@@ -120,20 +120,20 @@ WEUDEF void* weu_hashtable_getValue(hashTable *table, string *key, int freeKeyOn
             break;
         }
     } while (++position != hashValue);
-    if (!containsKey) printf("Hashtable does not contain key - %s\n", key->text);
+    if (!containsKey) printf("weu_hashTable does not contain key - %s\n", key->text);
     if (freeKeyOnDone) weu_string_free(&key);
     return out;
 }
-WEUDEF void* weu_hashtable_getValueByIndex(hashTable *table, int index) {
+WEUDEF void* weu_hashtable_getValueByIndex(weu_hashTable *table, int index) {
     if (index < 0 || index >= table->length) return NULL;
     return table->data[index].value;
 }
-WEUDEF string* weu_hashtable_getKeyByIndex(hashTable *table, int index) {
+WEUDEF weu_string* weu_hashtable_getKeyByIndex(weu_hashTable *table, int index) {
     if (index < 0 || index >= table->length) return NULL;
     return table->data[index].key;
 }
 
-WEUDEF int weu_hashtable_getKeyIndex(hashTable *table, string *key, int freeKeyOnDone) {
+WEUDEF int weu_hashtable_getKeyIndex(weu_hashTable *table, weu_string *key, int freeKeyOnDone) {
     if (table == NULL || key == NULL) return -1;
     unsigned int hashValue = weu_hash_FNV(key->text, table->length);
     int out         = -1;
@@ -145,7 +145,7 @@ WEUDEF int weu_hashtable_getKeyIndex(hashTable *table, string *key, int freeKeyO
             out = position; break; 
         }
     } while (++position != hashValue);
-    if (out == -1) printf("Hashtable does not contain key - %s\n", key->text);
+    if (out == -1) printf("weu_hashTable does not contain key - %s\n", key->text);
     if (freeKeyOnDone) weu_string_free(&key);
     return out;
 }

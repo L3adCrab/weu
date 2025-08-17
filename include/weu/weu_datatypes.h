@@ -17,20 +17,20 @@
 #define ALLOC_REF2PT        3
 #endif
 
-typedef unsigned char           bitfield_8;
-typedef unsigned int            bitfield_32;
-typedef unsigned long long      bitfield_64;
+typedef unsigned char           weu_bitfield_8;
+typedef unsigned int            weu_bitfield_32;
+typedef unsigned long long      weu_bitfield_64;
 
-typedef struct bitfield_8seg    { char segmentCount; bitfield_8  *b; }                          bitfield_8seg;
-typedef struct bitfield_32seg   { char segmentCount; bitfield_32 *b; }                          bitfield_32seg;
-typedef struct bitfield_64seg   { char segmentCount; bitfield_64 *b; }                          bitfield_64seg;
+typedef struct weu_bitfield_8seg    { char segmentCount; weu_bitfield_8  *b; }  weu_bitfield_8seg;
+typedef struct weu_bitfield_32seg   { char segmentCount; weu_bitfield_32 *b; }  weu_bitfield_32seg;
+typedef struct weu_bitfield_64seg   { char segmentCount; weu_bitfield_64 *b; }  weu_bitfield_64seg;
 
 typedef void   (*datafreefun)   ( void**);
-typedef struct list             { int length; void **data; char allocType; datafreefun d; }     list;
+typedef struct weu_list             { int length; void **data; char allocType; datafreefun d; } weu_list;
 
-typedef struct string           { int length; char *text; }                                     string;
+typedef struct weu_string           { int length; char *text; }                                 weu_string;
 
-typedef struct hashItem         { string *key; void *value; int inUse; }                        hashItem;
-typedef struct hashTable        { int length; hashItem *data; datafreefun d; }                  hashTable;
+typedef struct weu_hashItem         { weu_string *key; void *value; int inUse; }                weu_hashItem;
+typedef struct weu_hashTable        { int length; weu_hashItem *data; datafreefun d; }          weu_hashTable;
 
 #endif
