@@ -64,14 +64,37 @@ WEUDEF void weu_hashtable_free(weu_hashTable **handle) {
     free(*handle);
     *handle = NULL;
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  DATA
+
+WEUDEF void* weu_hashtable_getValue(weu_hashTable *table, weu_string *key, int freeKeyOnDone) {
+    if (table == NULL || key == NULL) return NULL;
+    unsigned int hashValue = weu_hash_strFNV(key) % table->length;
+    int position    = hashValue;
+    int containsKey = 0;
+    void *out       = NULL;
+    do
+    {
+        if (position >= table->length) position = 0;
+        if (table->data[position].inUse && weu_string_matches(table->data[position].key, key)) {
+            out = table->data[position].value;
+            containsKey = 1;
+            break;
+        }
+    } while (++position != hashValue);
+    if (!containsKey) printf("weu_hashTable does not contain key - %s\n", key->text);
+    if (freeKeyOnDone) weu_string_free(&key);
+    return out;
+}
+WEUDEF void* weu_hashtable_getValueByIndex(weu_hashTable *table, int index) {
+    if (index < 0 || index >= table->length) return NULL;
+    return table->data[index].value;
+}
 
 WEUDEF void weu_hashtable_addItem(weu_hashTable *table, weu_string *key, void *value, int freeKeyOnDone) {
     if (table == NULL || key == NULL) return;
     unsigned int hashValue = weu_hash_strFNV(key) % table->length;
     int position = hashValue;
-    printf("ADD ITEM\n");
-    printf("KEY - %s\n", key->text);
-    printf("HASH - %i\n", position);
     do
     {
         if (position >= table->length) position = 0;
@@ -83,7 +106,6 @@ WEUDEF void weu_hashtable_addItem(weu_hashTable *table, weu_string *key, void *v
             table->data[position].inUse = 1;
             table->data[position].value = value;
             weu_string_setText(table->data[position].key, key->text);
-            printf("POS - %i\n\n", position);
             break;
         }
     } while (++position == hashValue);
@@ -109,43 +131,18 @@ WEUDEF void weu_hashtable_removeItem(weu_hashTable *table, weu_string *key, int 
     if (!containsKey) printf("weu_hashTable does not conatin key - %s\n", key->text);
     if (freeKeyOnDone) weu_string_free(&key);
 }
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  GET KEY
 
-WEUDEF void* weu_hashtable_getValue(weu_hashTable *table, weu_string *key, int freeKeyOnDone) {
-    if (table == NULL || key == NULL) return NULL;
-    unsigned int hashValue = weu_hash_strFNV(key) % table->length;
-    int position    = hashValue;
-    int containsKey = 0;
-    void *out       = NULL;
-    do
-    {
-        if (position >= table->length) position = 0;
-        if (table->data[position].inUse && weu_string_matches(table->data[position].key, key)) {
-            out = table->data[position].value;
-            containsKey = 1;
-            break;
-        }
-    } while (++position != hashValue);
-    if (!containsKey) printf("weu_hashTable does not contain key - %s\n", key->text);
-    if (freeKeyOnDone) weu_string_free(&key);
-    return out;
-}
-WEUDEF void* weu_hashtable_getValueByIndex(weu_hashTable *table, int index) {
-    if (index < 0 || index >= table->length) return NULL;
-    return table->data[index].value;
-}
 WEUDEF weu_string* weu_hashtable_getKeyByIndex(weu_hashTable *table, int index) {
     if (index < 0 || index >= table->length) return NULL;
     return table->data[index].key;
 }
-
 WEUDEF int weu_hashtable_getKeyIndex(weu_hashTable *table, weu_string *key, int freeKeyOnDone) {
     if (table == NULL || key == NULL) return -1;
     unsigned int hashValue = weu_hash_strFNV(key) % table->length;
     int out         = -1;
     int position    = hashValue;
-    printf("GET KEY INDEX\n");
-    printf("KEY - %s\n", key->text);
-    printf("HASH - %i\n", hashValue);
     do
     {
         if (position >= table->length) position = 0;
@@ -155,7 +152,6 @@ WEUDEF int weu_hashtable_getKeyIndex(weu_hashTable *table, weu_string *key, int 
     } while (++position != hashValue);
     if (out == -1) printf("weu_hashTable does not contain key - %s\n", key->text);
     if (freeKeyOnDone) weu_string_free(&key);
-    printf("POS - %i\n\n", position);
     return out;
 }
 
