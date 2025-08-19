@@ -33,7 +33,7 @@ WEUDEF weu_list *weu_list_new(unsigned int size, datafreefun d, int ALLOC_) {
     out->d          = d;
     return out;
 }
-WEUDEF void weu_list_resize(weu_list *h, unsigned int size, int freeOOB) {
+WEUDEF void weu_list_resize(weu_list *h, unsigned int size, bool freeOOB) {
     if (h == NULL) return;
     size = size > 0 ? size : 0;
     if (freeOOB) {
@@ -107,7 +107,7 @@ WEUDEF void weu_list_insertData(weu_list *h, int index, void *data) {
     h->data[index]      = data;
 }
 //  If free is set to 0/FALSE returns pointer to data
-WEUDEF void *weu_list_removeData(weu_list *h, int index, int free) {
+WEUDEF void *weu_list_removeData(weu_list *h, int index, bool free) {
     if (h == NULL || index < 0 || index >= h->length) return NULL;
     void *out;
     if (!free) {
@@ -120,7 +120,7 @@ WEUDEF void *weu_list_removeData(weu_list *h, int index, int free) {
     for (int i = index; i < h->length - 1; i++) {
         h->data[i] = h->data[i + 1];
     }
-    weu_list_resize(h, h->length - 1, FALSE);
+    weu_list_resize(h, h->length - 1, false);
     return NULL;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,7 +129,7 @@ WEUDEF void *weu_list_removeData(weu_list *h, int index, int free) {
 //  Insert data at front of the weu_list
 WEUDEF void weu_list_unshift(weu_list *h, void *data) {
     if (h == NULL) return;
-    weu_list_resize(h, h->length + 1, FALSE);
+    weu_list_resize(h, h->length + 1, false);
     for (int i = h->length - 1; i > 0; i--) {
         h->data[i]      = h->data[i - 1];
     }
@@ -137,7 +137,7 @@ WEUDEF void weu_list_unshift(weu_list *h, void *data) {
 }
 //  Remove data at front of the weu_list
 //  If free is set to 0/FALSE returns pointer to data
-WEUDEF void *weu_list_shift(weu_list *h, int free) {
+WEUDEF void *weu_list_shift(weu_list *h, bool free) {
     if (h == NULL || h->length <= 0) return NULL;
     void *out;
     if (!free) {
@@ -150,7 +150,7 @@ WEUDEF void *weu_list_shift(weu_list *h, int free) {
     for (int i = 0; i < h->length - 1; i++) {
         h->data[i]      = h->data[i + 1];
     }
-    weu_list_resize(h, h->length - 1, FALSE);
+    weu_list_resize(h, h->length - 1, false);
     return out;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -164,7 +164,7 @@ WEUDEF void weu_list_push(weu_list *h, void *data) {
 }
 //  Remove data from the end of the weu_list
 //  If free is set to 0/FALSE returns pointer to data
-WEUDEF void *weu_list_pop(weu_list *h, int free) {
+WEUDEF void *weu_list_pop(weu_list *h, bool free) {
     if (h == NULL || h->length <= 0) return NULL;
     void *out;
     if (!free) {
@@ -174,7 +174,7 @@ WEUDEF void *weu_list_pop(weu_list *h, int free) {
         weu_list_freeData(h, 0);
         out = NULL;
     }
-    weu_list_resize(h, h->length - 1, FALSE);
+    weu_list_resize(h, h->length - 1, false);
     return out;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -182,7 +182,7 @@ WEUDEF void *weu_list_pop(weu_list *h, int free) {
 
 //  Frees data in range of index's from(inclusive) - to(exclusive)
 //  [from - to) 
-WEUDEF void weu_list_removeFromTo(weu_list *h, int from, int to, int free) {
+WEUDEF void weu_list_removeFromTo(weu_list *h, int from, int to, bool free) {
     if (h == NULL || from < 0 || to > h->length) return;
     int diff = to - from;
     if (diff < 0) return;
@@ -192,14 +192,14 @@ WEUDEF void weu_list_removeFromTo(weu_list *h, int from, int to, int free) {
     for (int i = to; i < h->length; i++) {
         h->data[i - diff] = h->data[i]; 
     }
-    weu_list_resize(h, h->length - diff, FALSE);
+    weu_list_resize(h, h->length - diff, false);
 }
 //  Inserts empty slots in range of from - to
 WEUDEF void weu_list_spaceFromTo(weu_list *h, int from, int to) {
     if (h == NULL || from < 0) return;
     int diff = to - from;
     if (diff < 0) return;
-    weu_list_resize(h, h->length + diff, FALSE);
+    weu_list_resize(h, h->length + diff, false);
     for (int i = h->length - 1; i >= to; i--) {
         h->data[i] = h->data[i - diff];
     }
