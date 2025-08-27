@@ -2,22 +2,13 @@
 #define weu_hashtable_h
 
 #ifndef WEUDEF
-    #ifdef WEU_EXTERN
-    #define WEUDEF extern
-    #else
-    #define WEUDEF static
-    #define WEU_IMPLEMENTATION
-    #endif
+#define WEUDEF static
 #endif
 
-#ifdef WEU_IMPLEMENTATION
-
 #include "weu_datatypes.h"
-#include "weu_list.h"
 #include "weu_string.h"
 
 #include <stdlib.h>
-#include <stdint.h>
 
 #define MIN_TABLE_SIZE      16
 
@@ -67,7 +58,7 @@ WEUDEF void weu_hashtable_free(weu_hashTable **handle) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  DATA
 
-WEUDEF void* weu_hashtable_getValue(weu_hashTable *table, weu_string *key, int freeKeyOnDone) {
+WEUDEF void* weu_hashtable_getValue(weu_hashTable *table, weu_string *key, bool freeKeyOnDone) {
     if (table == NULL || key == NULL) return NULL;
     unsigned int hashValue = weu_hash_strFNV(key) % table->length;
     int position    = hashValue;
@@ -91,7 +82,7 @@ WEUDEF void* weu_hashtable_getValueByIndex(weu_hashTable *table, int index) {
     return table->data[index].value;
 }
 
-WEUDEF void weu_hashtable_addItem(weu_hashTable *table, weu_string *key, void *value, int freeKeyOnDone) {
+WEUDEF void weu_hashtable_addItem(weu_hashTable *table, weu_string *key, void *value, bool freeKeyOnDone) {
     if (table == NULL || key == NULL) return;
     unsigned int hashValue = weu_hash_strFNV(key) % table->length;
     int position = hashValue;
@@ -111,7 +102,7 @@ WEUDEF void weu_hashtable_addItem(weu_hashTable *table, weu_string *key, void *v
     } while (++position == hashValue);
     if (freeKeyOnDone) weu_string_free(&key);
 }
-WEUDEF void weu_hashtable_removeItem(weu_hashTable *table, weu_string *key, int freeKeyOnDone) {
+WEUDEF void weu_hashtable_removeItem(weu_hashTable *table, weu_string *key, bool freeKeyOnDone) {
     if (table == NULL || key == NULL) return;
     unsigned int hashValue = weu_hash_strFNV(key) % table->length;
     int position    = hashValue;
@@ -138,7 +129,7 @@ WEUDEF weu_string* weu_hashtable_getKeyByIndex(weu_hashTable *table, int index) 
     if (index < 0 || index >= table->length) return NULL;
     return table->data[index].key;
 }
-WEUDEF int weu_hashtable_getKeyIndex(weu_hashTable *table, weu_string *key, int freeKeyOnDone) {
+WEUDEF int weu_hashtable_getKeyIndex(weu_hashTable *table, weu_string *key, bool freeKeyOnDone) {
     if (table == NULL || key == NULL) return -1;
     unsigned int hashValue = weu_hash_strFNV(key) % table->length;
     int out         = -1;
@@ -155,5 +146,4 @@ WEUDEF int weu_hashtable_getKeyIndex(weu_hashTable *table, weu_string *key, int 
     return out;
 }
 
-#endif
 #endif

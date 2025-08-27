@@ -2,15 +2,8 @@
 #define weu_iobase_h
 
 #ifndef WEUDEF
-    #ifdef WEU_EXTERN
-    #define WEUDEF extern
-    #else
-    #define WEUDEF static
-    #define WEU_IMPLEMENTATION
-    #endif
+#define WEUDEF static
 #endif
-
-#ifdef WEU_IMPLEMENTATION
 
 #include "weu_datatypes.h"
 #include "weu_string.h"
@@ -52,5 +45,4 @@ WEUDEF void weu_io_appendFile(const char *filePath, const char *text) {
     fclose(file);
 }
 
-#endif
 #endif

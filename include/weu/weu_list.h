@@ -2,15 +2,8 @@
 #define weu_list_h
 
 #ifndef WEUDEF
-    #ifdef WEU_EXTERN
-    #define WEUDEF extern
-    #else
-    #define WEUDEF static
-    #define WEU_IMPLEMENTATION
-    #endif
+#define WEUDEF static
 #endif
-
-#ifdef WEU_IMPLEMENTATION
 
 #include "weu_datatypes.h"
 
@@ -18,20 +11,26 @@
 #include <memory.h>
 #include <stdio.h>
 
-WEUDEF void weu_list_freeData(weu_list *h, int index);
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  ALLOCATION
 
-WEUDEF weu_list *weu_list_new(unsigned int size, datafreefun d, int ALLOC_) {
+WEUDEF weu_list *weu_list_new(unsigned int size, datafreefun d) {
     weu_list *out = (weu_list*)malloc(sizeof(weu_list));
     if (!out) return NULL;
     out->length     = size;
     out->data       = (void**)calloc(size, sizeof(void*));
     if (!out->data) return NULL;
-    out->allocType  = ALLOC_;
     out->d          = d;
     return out;
+}
+WEUDEF void weu_list_free(weu_list **h) {
+    if (*h == NULL) return;
+    for (int i = 0; i < (*h)->length; i++) {
+        weu_list_freeData(*h, i);
+    }
+    free((*h)->data);
+    free(*h);
+    *h = NULL;
 }
 WEUDEF void weu_list_resize(weu_list *h, unsigned int size, bool freeOOB) {
     if (h == NULL) return;
@@ -48,30 +47,10 @@ WEUDEF void weu_list_resize(weu_list *h, unsigned int size, bool freeOOB) {
         memset(h->data + oldLen, 0, sizeof(void*) * (size - oldLen));
     }
 }
-WEUDEF void weu_list_free(weu_list **h) {
-    if (*h == NULL) return;
-    for (int i = 0; i < (*h)->length; i++) {
-        weu_list_freeData(*h, i);
-    }
-    free((*h)->data);
-    free(*h);
-    *h = NULL;
-}
 //  Free data from weu_list and set to NULL at specified index without resizing weu_list
 WEUDEF void weu_list_freeData(weu_list *h, int index) {
     if (h == NULL || index < 0 || index >= h->length) return;
-    switch (h->allocType) {
-        case ALLOC_UNDEF :
-        case ALLOC_STACK :
-        break;
-        case ALLOC_MALLOC :
-        case ALLOC_REF2PT :
-        if (h->d != NULL) h->d(&h->data[index]);
-        break;
-        default:
-        printf("data at index [%i] INVALID ALLOC_TYPE!\n", index);
-        break;
-    }
+    if (h->d != NULL) h->d(&h->data[index]);
     h->data[index] = NULL;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -206,5 +185,4 @@ WEUDEF void weu_list_spaceFromTo(weu_list *h, int from, int to) {
     memset(h->data + from, 0, diff * sizeof(void*));
 }
 
-#endif
 #endif

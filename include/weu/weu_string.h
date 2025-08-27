@@ -2,15 +2,8 @@
 #define weu_string_h
 
 #ifndef WEUDEF
-    #ifdef WEU_EXTERN
-    #define WEUDEF extern
-    #else
-    #define WEUDEF static
-    #define WEU_IMPLEMENTATION
-    #endif
+#define WEUDEF static
 #endif
-
-#ifdef WEU_IMPLEMENTATION
 
 #include "weu_datatypes.h"
 #include "weu_list.h"
@@ -221,7 +214,7 @@ WEUDEF weu_string *weu_string_cutLine(weu_string *s) {
 
 WEUDEF weu_list *weu_string_splitByChar(const weu_string *s, char c) {
     if (s == NULL) return NULL;
-    weu_list *out = weu_list_new(0, weu_string_listFree, ALLOC_MALLOC);
+    weu_list *out = weu_list_new(0, weu_string_listFree);
     int sbeg = 0;
     for (int i = 0; i < s->length; i++) {
         if (s->text[i] == c) {
@@ -236,7 +229,7 @@ WEUDEF weu_list *weu_string_splitByChar(const weu_string *s, char c) {
 }
 WEUDEF weu_list *weu_string_splitByText(const weu_string *s, const char *text) {
     if (s == NULL || text == NULL) return NULL;
-    weu_list *out = weu_list_new(0, weu_string_listFree, ALLOC_MALLOC);
+    weu_list *out = weu_list_new(0, weu_string_listFree);
     int textLen = strlen(text);
     int sbeg = 0;
     for (int i = 0; i < s->length; i++) {
@@ -298,5 +291,4 @@ WEUDEF void weu_string_print(const char *text, const char *pre, const char *post
     printf("%s%s%s\n", pre, text, post);
 }
 
-#endif
 #endif

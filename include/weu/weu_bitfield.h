@@ -2,15 +2,8 @@
 #define weu_bitfield_h
 
 #ifndef WEUDEF
-    #ifdef WEU_EXTERN
-    #define WEUDEF extern
-    #else
-    #define WEUDEF static
-    #define WEU_IMPLEMENTATION
-    #endif
+#define WEUDEF static
 #endif
-
-#ifdef WEU_IMPLEMENTATION
 
 #include "weu_datatypes.h"
 
@@ -336,5 +329,4 @@ WEUDEF void _print_bitfield(unsigned long long bf, unsigned long long mask, int 
     }
 }
 
-#endif
 #endif
