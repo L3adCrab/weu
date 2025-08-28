@@ -72,7 +72,7 @@ WEUDEF void weu_list_setData(weu_list *h, int index, void *data) {
     if (h == NULL || index < 0 || index >= h->length) return;
     h->data[index]         = data;
 }
-void *weu_list_getData(weu_list *h, int index) {
+WEUDEF void *weu_list_getData(weu_list *h, int index) {
     if (h == NULL || index < 0 || index >= h->length) return NULL;
     return h->data[index];
 }
