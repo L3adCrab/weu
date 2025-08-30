@@ -1,8 +1,30 @@
 #ifndef weu_string_h
 #define weu_string_h
 
+/*///////////////////////////////////////////////////////////////////////////////////
+//  USAGE
+//  By default functions are defined as extern.
+//  To implement somewhere in source file before including header file
+//  #define WEU_IMPLEMENTATION
+//  Implementation should be defined only once.
+//  
+//  For use as static functions before including header file
+//  #define WEU_STATIC
+//  There if no need to define WEU_IMPLEMENTATION when using as static,
+//  although WEU_STATIC will need to be somewhere defined in every source file where
+//  library will be used. To circumvent this and whole library will be used as static
+//  add the WEU_STATIC define to compiler (gcc/clang - -DWEU_STATIC)
+//
+//  To include all weu library in souce file at once, include weu_master.h  
+*////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef WEUDEF
-#define WEUDEF static
+    #ifdef WEU_STATIC
+    #define WEUDEF static
+    #define WEU_IMPLEMENTATION
+    #else
+    #define WEUDEF extern
+    #endif
 #endif
 
 #include "weu_datatypes.h"
@@ -22,27 +44,95 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  ALLOCATION
 
-WEUDEF weu_string *weu_string_newSize(int length) {
+WEUDEF weu_string *weu_string_newSize(int length);
+WEUDEF weu_string *weu_string_new(const char *text);
+WEUDEF weu_string *weu_string_copy(weu_string *str);
+
+WEUDEF void weu_string_resize(weu_string *s, int length, char emptyFill);
+
+WEUDEF void weu_string_free(weu_string **data);
+WEUDEF void weu_string_listFree(void **data);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  LENGTH
+
+WEUDEF int weu_string_stringLength(const weu_string *data);
+WEUDEF int weu_string_textLength(const char *text);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  COMPARISON
+
+WEUDEF int weu_string_matches(const weu_string *s1, const weu_string *s2);
+WEUDEF int weu_string_textMatches(const char *text1, const char *text2);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  TEXT
+
+WEUDEF void weu_string_setText(weu_string *s, const char *text);
+
+WEUDEF weu_string *weu_string_fromTo(const weu_string *s, int from, int to);
+WEUDEF void weu_string_deleteFromTo(weu_string *s, int from, int to);
+WEUDEF weu_string *weu_string_cutFromTo(weu_string *s, int from, int to);
+
+WEUDEF void weu_string_overwriteFromTo(weu_string *s, int from, int to, const char *text);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  APPEND
+
+WEUDEF void weu_string_append(weu_string *s1, weu_string *s2);
+WEUDEF void weu_string_appendText(weu_string *s, const char *text);
+
+WEUDEF weu_string *weu_string_getAppend(weu_string *s1, weu_string *s2);
+WEUDEF weu_string *weu_string_getAppendText(weu_string *s, const char *text);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  LINE
+
+WEUDEF weu_string *weu_string_getLine(const weu_string *s);
+WEUDEF weu_string *weu_string_cutLine(weu_string *s);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  SPLIT
+
+WEUDEF weu_list *weu_string_splitByChar(const weu_string *s, char c);
+WEUDEF weu_list *weu_string_splitByText(const weu_string *s, const char *text);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  PARSE
+
+WEUDEF int weu_string_parseInt(const char *text);
+WEUDEF float weu_string_parseFloat(const char *text);
+WEUDEF long long weu_string_parseLLong(const char *text);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  TO weu_string
+
+WEUDEF weu_string *weu_string_int(int val);
+WEUDEF weu_string *weu_string_float(float val);
+WEUDEF weu_string *weu_string_llong(long long val);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  DEBUG
+
+WEUDEF void weu_string_print(const char *text, const char *pre, const char *post);
+
+#ifdef WEU_IMPLEMENTATION
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  ALLOCATION
+
+weu_string *weu_string_newSize(int length) {
     weu_string *out         = (weu_string*)malloc(sizeof(weu_string));
     out->length         = length;
     out->text           = (char*)calloc(length + 1, 1);
     out->text[length]   = '\0';
     return out;
 }
-WEUDEF weu_string *weu_string_new(const char *text) {
+weu_string *weu_string_new(const char *text) {
     int length  = strlen(text);
     weu_string *out = weu_string_newSize(length);
     memcpy(out->text, text, length);
     return out;
 }
-WEUDEF weu_string *weu_string_copy(weu_string *str) {
+weu_string *weu_string_copy(weu_string *str) {
     if (str == NULL) return NULL;
     weu_string *out = weu_string_newSize(str->length);
     memcpy(out->text, str->text, str->length);
     return out;
 }
 
-WEUDEF void weu_string_resize(weu_string *s, int length, char emptyFill) {
+void weu_string_resize(weu_string *s, int length, char emptyFill) {
     s->text = (char*)realloc(s->text, length + 1);
     if (s->length < length) {
         memset(s->text + s->length, emptyFill, length - s->length);
@@ -51,13 +141,13 @@ WEUDEF void weu_string_resize(weu_string *s, int length, char emptyFill) {
     s->text[length] = '\0'; 
 }
 
-WEUDEF void weu_string_free(weu_string **data) {
+void weu_string_free(weu_string **data) {
     if (*data == NULL) return;
     free((*data)->text);
     free( *data);
     *data = NULL;
 }
-WEUDEF void weu_string_listFree(void **data) {
+void weu_string_listFree(void **data) {
     if (*data == NULL) return;
     free(((weu_string*)*data)->text);
     free((weu_string*)*data);
@@ -66,28 +156,28 @@ WEUDEF void weu_string_listFree(void **data) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  LENGTH
 
-WEUDEF int weu_string_stringLength(const weu_string *data) {
+int weu_string_stringLength(const weu_string *data) {
     if (data == NULL) return -1;
     return data->length;
 }
-WEUDEF int weu_string_textLength(const char *text) {
+int weu_string_textLength(const char *text) {
     return strlen(text);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  COMPARISON
 
-WEUDEF int weu_string_matches(const weu_string *s1, const weu_string *s2) {
+int weu_string_matches(const weu_string *s1, const weu_string *s2) {
     if (s1 == NULL || s2 == NULL) return 0;
     if (s1->length != s2->length) return 0;
     return strcmp(s1->text, s2->text) == 0 ? 1 : 0;
 }
-WEUDEF int weu_string_textMatches(const char *text1, const char *text2) {
+int weu_string_textMatches(const char *text1, const char *text2) {
     return strcmp(text1, text2) == 0 ? 1 : 0;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  TEXT
 
-WEUDEF void weu_string_setText(weu_string *s, const char *text) {
+void weu_string_setText(weu_string *s, const char *text) {
     if (s == NULL) return;
     int len = weu_string_textLength(text);
     s->length = len;
@@ -96,7 +186,7 @@ WEUDEF void weu_string_setText(weu_string *s, const char *text) {
     s->text[len] = '\0';
 }
 
-WEUDEF weu_string *weu_string_fromTo(const weu_string *s, int from, int to) {
+weu_string *weu_string_fromTo(const weu_string *s, int from, int to) {
     if (s == NULL) return NULL;
     from = from > 0 ? from : 0;
     to = to > from ? (to < s->length ? to : s->length) : from;
@@ -105,7 +195,7 @@ WEUDEF weu_string *weu_string_fromTo(const weu_string *s, int from, int to) {
     memcpy(out->text, s->text + from, len);
     return out;
 }
-WEUDEF void weu_string_deleteFromTo(weu_string *s, int from, int to) {
+void weu_string_deleteFromTo(weu_string *s, int from, int to) {
     if (s == NULL) return;
     from = from > 0 ? from : 0;
     to = to > from ? (to < s->length ? to : s->length) : from;
@@ -115,7 +205,7 @@ WEUDEF void weu_string_deleteFromTo(weu_string *s, int from, int to) {
     }
     weu_string_resize(s, s->length - len, ' ');
 }
-WEUDEF weu_string *weu_string_cutFromTo(weu_string *s, int from, int to) {
+weu_string *weu_string_cutFromTo(weu_string *s, int from, int to) {
     if (s == NULL) return NULL;
     from = from > 0 ? from : 0;
     to = to > from ? (to < s->length ? to : s->length) : from;
@@ -126,7 +216,7 @@ WEUDEF weu_string *weu_string_cutFromTo(weu_string *s, int from, int to) {
     return out;
 }
 
-WEUDEF void weu_string_overwriteFromTo(weu_string *s, int from, int to, const char *text) {
+void weu_string_overwriteFromTo(weu_string *s, int from, int to, const char *text) {
     if (s == NULL) return;
     from = from > 0 ? from : 0;
     to = to > from ? (to < s->length ? to : s->length) : from;
@@ -137,26 +227,26 @@ WEUDEF void weu_string_overwriteFromTo(weu_string *s, int from, int to, const ch
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  APPEND
 
-WEUDEF void weu_string_append(weu_string *s1, weu_string *s2) {
+void weu_string_append(weu_string *s1, weu_string *s2) {
     if (s1 == NULL || s2 == NULL) return;
     weu_string_resize(s1, s1->length + s2->length, ' ');
     memcpy(s1->text + s1->length, s2->text, s2->length);
 }
-WEUDEF void weu_string_appendText(weu_string *s, const char *text) {
+void weu_string_appendText(weu_string *s, const char *text) {
     if (s == NULL) return;
     int textLen = weu_string_textLength(text);
     weu_string_resize(s, s->length + textLen, ' ');
     memcpy(s->text + s->length, text, textLen);
 }
 
-WEUDEF weu_string *weu_string_getAppend(weu_string *s1, weu_string *s2) {
+weu_string *weu_string_getAppend(weu_string *s1, weu_string *s2) {
     if (s1 == NULL || s2 == NULL) return NULL;
     weu_string *out = weu_string_newSize(s1->length + s2->length);
     memcpy(out->text, s1->text, s1->length);
     memcpy(out->text + s1->length, s2->text, s2->length);
     return out;
 }
-WEUDEF weu_string *weu_string_getAppendText(weu_string *s, const char *text) {
+weu_string *weu_string_getAppendText(weu_string *s, const char *text) {
     if (s == NULL) return NULL;
     int textLen = weu_string_textLength(text);
     weu_string *out = weu_string_newSize(s->length + textLen);
@@ -167,7 +257,7 @@ WEUDEF weu_string *weu_string_getAppendText(weu_string *s, const char *text) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  LINE
 
-WEUDEF weu_string *weu_string_getLine(const weu_string *s) {
+weu_string *weu_string_getLine(const weu_string *s) {
     if (s == NULL) return NULL;
     int charPointer = 0;
     while (charPointer < s->length) {
@@ -183,7 +273,7 @@ WEUDEF weu_string *weu_string_getLine(const weu_string *s) {
     weu_string *out = weu_string_fromTo(s, 0, charPointer);
     return out;
 }
-WEUDEF weu_string *weu_string_cutLine(weu_string *s) {
+weu_string *weu_string_cutLine(weu_string *s) {
     if (s == NULL) return NULL;
     int isNewLine = 0;
     int charPointer = 0;
@@ -212,7 +302,7 @@ WEUDEF weu_string *weu_string_cutLine(weu_string *s) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  SPLIT
 
-WEUDEF weu_list *weu_string_splitByChar(const weu_string *s, char c) {
+weu_list *weu_string_splitByChar(const weu_string *s, char c) {
     if (s == NULL) return NULL;
     weu_list *out = weu_list_new(0, weu_string_listFree);
     int sbeg = 0;
@@ -227,7 +317,7 @@ WEUDEF weu_list *weu_string_splitByChar(const weu_string *s, char c) {
     }
     return out;
 }
-WEUDEF weu_list *weu_string_splitByText(const weu_string *s, const char *text) {
+weu_list *weu_string_splitByText(const weu_string *s, const char *text) {
     if (s == NULL || text == NULL) return NULL;
     weu_list *out = weu_list_new(0, weu_string_listFree);
     int textLen = strlen(text);
@@ -254,31 +344,31 @@ WEUDEF weu_list *weu_string_splitByText(const weu_string *s, const char *text) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  PARSE
 
-WEUDEF int weu_string_parseInt(const char *text) {
+int weu_string_parseInt(const char *text) {
     return atoi(text);
 }
-WEUDEF float weu_string_parseFloat(const char *text) {
+float weu_string_parseFloat(const char *text) {
     return atof(text);
 }
-WEUDEF long long weu_string_parseLLong(const char *text) {
+long long weu_string_parseLLong(const char *text) {
     return atoll(text);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  TO weu_string
 
-WEUDEF weu_string *weu_string_int(int val) {
+weu_string *weu_string_int(int val) {
     char buffer[64];
     sprintf(buffer, "%i", val);
     weu_string *out = weu_string_new(buffer);
     return out;
 }
-WEUDEF weu_string *weu_string_float(float val) {
+weu_string *weu_string_float(float val) {
     char buffer[64];
     sprintf(buffer, "%f", val);
     weu_string *out = weu_string_new(buffer);
     return out;
 }
-WEUDEF weu_string *weu_string_llong(long long val) {
+weu_string *weu_string_llong(long long val) {
     char buffer[64];
     sprintf(buffer, "%lld", val);
     weu_string *out = weu_string_new(buffer);
@@ -287,8 +377,9 @@ WEUDEF weu_string *weu_string_llong(long long val) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  DEBUG
 
-WEUDEF void weu_string_print(const char *text, const char *pre, const char *post) {
+void weu_string_print(const char *text, const char *pre, const char *post) {
     printf("%s%s%s\n", pre, text, post);
 }
 
+#endif
 #endif

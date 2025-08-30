@@ -1,8 +1,30 @@
 #ifndef weu_list_h
 #define weu_list_h
 
+/*///////////////////////////////////////////////////////////////////////////////////
+//  USAGE
+//  By default functions are defined as extern.
+//  To implement somewhere in source file before including header file
+//  #define WEU_IMPLEMENTATION
+//  Implementation should be defined only once.
+//  
+//  For use as static functions before including header file
+//  #define WEU_STATIC
+//  There if no need to define WEU_IMPLEMENTATION when using as static,
+//  although WEU_STATIC will need to be somewhere defined in every source file where
+//  library will be used. To circumvent this and whole library will be used as static
+//  add the WEU_STATIC define to compiler (gcc/clang - -DWEU_STATIC)
+//
+//  To include all weu library in souce file at once, include weu_master.h  
+*////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef WEUDEF
-#define WEUDEF static
+    #ifdef WEU_STATIC
+    #define WEUDEF static
+    #define WEU_IMPLEMENTATION
+    #else
+    #define WEUDEF extern
+    #endif
 #endif
 
 #include "weu_datatypes.h"
@@ -14,7 +36,54 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  ALLOCATION
 
-WEUDEF weu_list *weu_list_new(unsigned int size, datafreefun d) {
+WEUDEF weu_list *weu_list_new(unsigned int size, datafreefun d);
+WEUDEF void weu_list_free(weu_list **h);
+WEUDEF void weu_list_resize(weu_list *h, unsigned int size, bool freeOOB);
+WEUDEF void weu_list_freeData(weu_list *h, int index);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  FREE
+
+WEUDEF void weu_list_stdFree(void **data);
+WEUDEF void weu_list_setFreeFun(weu_list *h, datafreefun d);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  DATA
+
+WEUDEF void weu_list_setData(weu_list *h, int index, void *data);
+WEUDEF void *weu_list_getData(weu_list *h, int index);
+
+WEUDEF void weu_list_insertData(weu_list *h, int index, void *data);
+WEUDEF void *weu_list_removeData(weu_list *h, int index, bool free);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  BEG
+
+//  Insert data at front of the weu_list
+WEUDEF void weu_list_unshift(weu_list *h, void *data);
+//  Remove data at front of the weu_list
+//  If free is set to 0/FALSE returns pointer to data
+WEUDEF void *weu_list_shift(weu_list *h, bool free);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  END
+
+//  Insert data at the end of the weu_list
+WEUDEF void weu_list_push(weu_list *h, void *data);
+//  Remove data from the end of the weu_list
+//  If free is set to 0/FALSE returns pointer to data
+WEUDEF void *weu_list_pop(weu_list *h, bool free);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  FROM TO
+
+//  Frees data in range of index's from(inclusive) - to(exclusive)
+//  [from - to) 
+WEUDEF void weu_list_removeFromTo(weu_list *h, int from, int to, bool free);
+//  Inserts empty slots in range of from - to
+WEUDEF void weu_list_spaceFromTo(weu_list *h, int from, int to);
+
+#ifdef WEU_IMPLEMENTATION
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  ALLOCATION
+
+weu_list *weu_list_new(unsigned int size, datafreefun d) {
     weu_list *out = (weu_list*)malloc(sizeof(weu_list));
     if (!out) return NULL;
     out->length     = size;
@@ -23,7 +92,7 @@ WEUDEF weu_list *weu_list_new(unsigned int size, datafreefun d) {
     out->d          = d;
     return out;
 }
-WEUDEF void weu_list_free(weu_list **h) {
+void weu_list_free(weu_list **h) {
     if (*h == NULL) return;
     for (int i = 0; i < (*h)->length; i++) {
         weu_list_freeData(*h, i);
@@ -32,7 +101,7 @@ WEUDEF void weu_list_free(weu_list **h) {
     free(*h);
     *h = NULL;
 }
-WEUDEF void weu_list_resize(weu_list *h, unsigned int size, bool freeOOB) {
+void weu_list_resize(weu_list *h, unsigned int size, bool freeOOB) {
     if (h == NULL) return;
     size = size > 0 ? size : 0;
     if (freeOOB) {
@@ -48,7 +117,7 @@ WEUDEF void weu_list_resize(weu_list *h, unsigned int size, bool freeOOB) {
     }
 }
 //  Free data from weu_list and set to NULL at specified index without resizing weu_list
-WEUDEF void weu_list_freeData(weu_list *h, int index) {
+void weu_list_freeData(weu_list *h, int index) {
     if (h == NULL || index < 0 || index >= h->length) return;
     if (h->d != NULL) h->d(&h->data[index]);
     h->data[index] = NULL;
@@ -56,28 +125,28 @@ WEUDEF void weu_list_freeData(weu_list *h, int index) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  FREE
 
-WEUDEF void weu_list_stdFree(void **data) {
+void weu_list_stdFree(void **data) {
     if (*data == NULL) return;
     free(*data);
     *data = NULL;
 }
-WEUDEF void weu_list_setFreeFun(weu_list *h, datafreefun d) {
+void weu_list_setFreeFun(weu_list *h, datafreefun d) {
     if (h == NULL) return;
     h->d = d;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  DATA
 
-WEUDEF void weu_list_setData(weu_list *h, int index, void *data) {
+void weu_list_setData(weu_list *h, int index, void *data) {
     if (h == NULL || index < 0 || index >= h->length) return;
     h->data[index]         = data;
 }
-WEUDEF void *weu_list_getData(weu_list *h, int index) {
+void *weu_list_getData(weu_list *h, int index) {
     if (h == NULL || index < 0 || index >= h->length) return NULL;
     return h->data[index];
 }
 
-WEUDEF void weu_list_insertData(weu_list *h, int index, void *data) {
+void weu_list_insertData(weu_list *h, int index, void *data) {
     if (h == NULL || index < 0 || index >= h->length) return;
     weu_list_resize(h, h->length + 1, 0);
     for (int i = h->length - 1; i > index; i--) {
@@ -86,7 +155,7 @@ WEUDEF void weu_list_insertData(weu_list *h, int index, void *data) {
     h->data[index]      = data;
 }
 //  If free is set to 0/FALSE returns pointer to data
-WEUDEF void *weu_list_removeData(weu_list *h, int index, bool free) {
+void *weu_list_removeData(weu_list *h, int index, bool free) {
     if (h == NULL || index < 0 || index >= h->length) return NULL;
     void *out;
     if (!free) {
@@ -106,7 +175,7 @@ WEUDEF void *weu_list_removeData(weu_list *h, int index, bool free) {
 //  BEG
 
 //  Insert data at front of the weu_list
-WEUDEF void weu_list_unshift(weu_list *h, void *data) {
+void weu_list_unshift(weu_list *h, void *data) {
     if (h == NULL) return;
     weu_list_resize(h, h->length + 1, false);
     for (int i = h->length - 1; i > 0; i--) {
@@ -116,7 +185,7 @@ WEUDEF void weu_list_unshift(weu_list *h, void *data) {
 }
 //  Remove data at front of the weu_list
 //  If free is set to 0/FALSE returns pointer to data
-WEUDEF void *weu_list_shift(weu_list *h, bool free) {
+void *weu_list_shift(weu_list *h, bool free) {
     if (h == NULL || h->length <= 0) return NULL;
     void *out;
     if (!free) {
@@ -136,14 +205,14 @@ WEUDEF void *weu_list_shift(weu_list *h, bool free) {
 //  END
 
 //  Insert data at the end of the weu_list
-WEUDEF void weu_list_push(weu_list *h, void *data) {
+void weu_list_push(weu_list *h, void *data) {
     if (h == NULL) return;
     weu_list_resize(h, h->length + 1, 0);
     h->data[h->length - 1]          = data;
 }
 //  Remove data from the end of the weu_list
 //  If free is set to 0/FALSE returns pointer to data
-WEUDEF void *weu_list_pop(weu_list *h, bool free) {
+void *weu_list_pop(weu_list *h, bool free) {
     if (h == NULL || h->length <= 0) return NULL;
     void *out;
     if (!free) {
@@ -161,7 +230,7 @@ WEUDEF void *weu_list_pop(weu_list *h, bool free) {
 
 //  Frees data in range of index's from(inclusive) - to(exclusive)
 //  [from - to) 
-WEUDEF void weu_list_removeFromTo(weu_list *h, int from, int to, bool free) {
+void weu_list_removeFromTo(weu_list *h, int from, int to, bool free) {
     if (h == NULL || from < 0 || to > h->length) return;
     int diff = to - from;
     if (diff < 0) return;
@@ -174,7 +243,7 @@ WEUDEF void weu_list_removeFromTo(weu_list *h, int from, int to, bool free) {
     weu_list_resize(h, h->length - diff, false);
 }
 //  Inserts empty slots in range of from - to
-WEUDEF void weu_list_spaceFromTo(weu_list *h, int from, int to) {
+void weu_list_spaceFromTo(weu_list *h, int from, int to) {
     if (h == NULL || from < 0) return;
     int diff = to - from;
     if (diff < 0) return;
@@ -185,4 +254,5 @@ WEUDEF void weu_list_spaceFromTo(weu_list *h, int from, int to) {
     memset(h->data + from, 0, diff * sizeof(void*));
 }
 
+#endif
 #endif
