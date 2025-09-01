@@ -20,6 +20,7 @@
 
 #include "weu_bitfield.h"
 #include "weu_hashtable.h"
+#include "weu_iobase.h"
 #include "weu_list.h"
 #include "weu_pair.h"
 #include "weu_string.h"
