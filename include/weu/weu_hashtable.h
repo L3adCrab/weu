@@ -56,6 +56,12 @@ WEUDEF void* weu_hashtable_getValueByIndex(weu_hashTable *table, int index);
 WEUDEF void weu_hashtable_addItem(weu_hashTable *table, weu_string *key, void *value, bool freeKeyOnDone);
 WEUDEF void weu_hashtable_removeItem(weu_hashTable *table, weu_string *key, bool freeKeyOnDone);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+//  INDEX
+
+WEUDEF int weu_hashtable_getUsableIndex(weu_hashTable *table, weu_string *key, bool freeKeyOnDone);
+WEUDEF void weu_hashtable_setDataAtIndex(weu_hashTable *table, int index, weu_string *key, void *data, bool freeKeyOnDone);
+WEUDEF void weu_hashtable_removeItemAtIndex(weu_hashTable *table, int index);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 //  GET KEY
 
 WEUDEF weu_string* weu_hashtable_getKeyByIndex(weu_hashTable *table, int index);
@@ -168,6 +174,44 @@ void weu_hashtable_removeItem(weu_hashTable *table, weu_string *key, bool freeKe
     } while (++position != hashValue);
     if (!containsKey) printf("weu_hashTable does not conatin key - %s\n", key->text);
     if (freeKeyOnDone) weu_string_free(&key);
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  INDEX
+
+int weu_hashtable_getUsableIndex(weu_hashTable *table, weu_string *key, bool freeKeyOnDone) {
+    if (table == NULL || key == NULL) return -1;
+    unsigned int hashValue = weu_hash_strFNV(key) % table->length;
+    int position = hashValue;
+    do
+    {
+        if (position >= table->length) position = 0;
+        if (weu_string_matches(table->data[position].key, key)) {
+            printf("weu_hashTable already contains key - %s\n", key->text);
+            position = -1;
+            break;
+        }
+        if (!table->data[position].inUse) {
+            break;
+        }
+    } while (++position == hashValue);
+    if (freeKeyOnDone) weu_string_free(&key);
+    return position;
+}
+void weu_hashtable_setDataAtIndex(weu_hashTable *table, int index, weu_string *key, void *data, bool freeKeyOnDone) {
+    if (index < 0 || index >= table->length) return;
+    if (table->data[index].inUse) {
+        weu_hashtable_removeItemAtIndex(table, index);    
+    }
+    table->data[index].inUse = 1;
+    table->data[index].key = weu_string_copy(key);
+    table->data[index].value = data;
+    if (freeKeyOnDone) weu_string_free(&key);
+}
+void weu_hashtable_removeItemAtIndex(weu_hashTable *table, int index) {
+    if (table == NULL || index < 0 || index >= table->length) return;
+    table->data[index].inUse = false;
+    if (table->d != NULL) table->d(&table->data[index].value);
+    table->data[index].value = NULL;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  GET KEY
