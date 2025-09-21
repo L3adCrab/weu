@@ -1,7 +1,6 @@
-#ifndef weu_master_h
-#define weu_master_h
-
 /*///////////////////////////////////////////////////////////////////////////////////
+//  SPDX-License-Identifier: Unlicense
+/////////////////////////////////////////////////////////////////////////////////////
 //  USAGE
 //  By default functions are defined as extern.
 //  To implement somewhere in source file before including header file
@@ -17,6 +16,9 @@
 //
 //  To include all weu library in souce file at once, include weu_master.h
 *////////////////////////////////////////////////////////////////////////////////////
+
+#ifndef weu_master_h
+#define weu_master_h
 
 #include "weu_bitfield.h"
 #include "weu_hashtable.h"
