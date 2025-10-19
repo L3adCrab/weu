@@ -44,7 +44,7 @@
 #define STRY(X)     (#X)
 //  token pasting
 #define TOKP(X, Y)  (X#Y)
-#define SETLENRANGE(L, Min, Max) L = L < Min ? Min : L > Max ? Max : L
+#define SETLENRANGE(L, Min, Max) L = (int)L < Min ? Min : L > Max ? Max : L
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  ALLOCATION
 
@@ -59,9 +59,9 @@ WEUDEF void weu_string_listFree(void **data);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  NON ALLOC
 
-WEUDEF weu_stringNA weu_string_newSizeNA(int length);
-WEUDEF weu_stringNA weu_string_newStringNA(weu_string *str);
-WEUDEF weu_stringNA weu_string_newTextNA(const char *text);
+WEUDEF weu_stringNA weu_stringNA_newSize(int length);
+WEUDEF weu_stringNA weu_stringNA_newString(weu_string *str);
+WEUDEF weu_stringNA weu_stringNA_newText(const char *text);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  LENGTH
 
@@ -99,8 +99,8 @@ WEUDEF weu_stringNA weu_string_filledNA(char fillChar, int len);
 WEUDEF void weu_string_appendString(weu_string *s, int count, ...);
 WEUDEF void weu_string_appendText(weu_string *s, int count, ...);
 
-WEUDEF weu_stringNA weu_string_appendedStringNA(const weu_string *s, int count, ...);
-WEUDEF weu_stringNA weu_string_appendedTextNA(const weu_string *s, int count, ...);
+WEUDEF weu_stringNA weu_string_concatedStringNA(int count, ...);
+WEUDEF weu_stringNA weu_string_concatedTextNA(int count, ...);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  LINE
 
@@ -190,7 +190,7 @@ void weu_string_listFree(void **data) {
 //  NON ALLOC
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-weu_stringNA weu_string_newSizeNA(int length) {
+weu_stringNA weu_stringNA_newSize(int length) {
     weu_stringNA out;
     SETLENRANGE(length, 0, 511);
     out.length          = length;
@@ -199,6 +199,7 @@ weu_stringNA weu_string_newSizeNA(int length) {
 }
 weu_stringNA weu_stringNA_newString(weu_string *str) {
     weu_stringNA out;
+    out.length = str->length;
     SETLENRANGE(out.length, 0, 511);
     memcpy(out.text, str->text, out.length);
     out.text[out.length] = '\0';
@@ -207,9 +208,9 @@ weu_stringNA weu_stringNA_newString(weu_string *str) {
 weu_stringNA weu_stringNA_newText(const char *text) {
     weu_stringNA out;
     uint32_t textLen = weu_string_textLength(text);
-    SETLENRANGE(out.length, 0, 511);
-    memcpy(out.text, text, out.length);
-    out.text[out.length] = '\0';
+    SETLENRANGE(textLen, 0, 511);
+    memcpy(out.text, text, textLen);
+    out.text[textLen] = '\0';
     return out;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -266,7 +267,7 @@ weu_string *weu_string_fromTo(const weu_string *s, int from, int to) {
     return out;
 }
 weu_stringNA weu_string_fromToNA(const weu_string *s, int from, int to) {
-    if (s == NULL) return (weu_stringNA){0, 0, 0};
+    if (s == NULL) return (weu_stringNA){.length = 0, .text = ""};
     from = from > 0 ? from : 0;
     to = to > from ? (to < s->length ? to : s->length) : from;
     int len = to - from;
@@ -289,12 +290,12 @@ weu_string *weu_string_cutFromTo(weu_string *s, int from, int to) {
     return out;
 }
 weu_stringNA weu_string_cutFromToNA(weu_string *s, int from, int to) {
-    if (s == NULL) return (weu_stringNA){0, 0, 0};
+    if (s == NULL) return (weu_stringNA){.length = 0, .text = ""};
     from = from > 0 ? from : 0;
     to = to > from ? (to < s->length ? to : s->length) : from;
     int len = to - from;
     SETLENRANGE(len, 0, 511);
-    weu_stringNA out = weu_string_newSizeNA(len);
+    weu_stringNA out = weu_stringNA_newSize(len);
     memcpy(out.text, s->text + from, len);
     weu_string_deleteFromTo(s, from, to);
     return out;
@@ -383,49 +384,46 @@ void weu_string_appendText(weu_string *s, int count, ...) {
     va_end(args);
 }
 
-weu_stringNA weu_string_appendedStringNA(const weu_string *s, int count, ...) {
-    if (s == NULL) return (weu_stringNA){0, 0, 0};
-    weu_string *cpy = weu_string_copy(s);
+weu_stringNA weu_string_concatedStringNA(int count, ...) {
+    weu_stringNA out = weu_stringNA_newText("");
     va_list args;
     va_start(args, count);
     for (int i = 0; i < count; i++)
     {
-        if (cpy->length >= 511) {
-            weu_string_resize(cpy, 511, ' ');
+        if (out.length >= 511) {
             break;
         }
         weu_string *str = va_arg(args, weu_string*);
         if (str == NULL) continue;
-        int oldLen = cpy->length;
-        weu_string_resize(cpy, cpy->length + str->length, ' ');
-        memcpy(cpy->text + oldLen, str->text, str->length);
+        int oldLen = out.length;
+        int strLen = str->length;
+        strLen = oldLen + strLen > 511 ? 511 - oldLen : strLen;
+        out.length = oldLen + strLen;
+        memcpy(out.text + oldLen, str->text, strLen);
     }
     va_end(args);
-    weu_stringNA out = weu_stringNA_newString(cpy);
-    weu_string_free(&cpy);
+    out.text[out.length] = '\0';
     return out;
 }
-weu_stringNA weu_string_appendedTextNA(const weu_string *s, int count, ...) {
-    if (s == NULL) return (weu_stringNA){0, 0, 0};
-    weu_string *cpy = weu_string_copy(s);
+weu_stringNA weu_string_concatedTextNA(int count, ...) {
+    weu_stringNA out = weu_stringNA_newText("");
     va_list args;
     va_start(args, count);
     for (int i = 0; i < count; i++)
     {
-        if (cpy->length >= 511) {
-            weu_string_resize(cpy, 511, ' ');
+        if (out.length >= 511) {
             break;
         }
         char *str = va_arg(args, char*);
         if (str == NULL) continue;
-        int oldLen = cpy->length;
+        int oldLen = out.length;
         int strLen = weu_string_textLength(str);
-        weu_string_resize(cpy, cpy->length + strLen, ' ');
-        memcpy(cpy->text + oldLen, str, strLen);
+        strLen = oldLen + strLen > 511 ? 511 - oldLen : strLen;
+        out.length = oldLen + strLen;
+        memcpy(out.text + oldLen, str, strLen);
     }
     va_end(args);
-    weu_stringNA out = weu_stringNA_newString(cpy);
-    weu_string_free(&cpy);
+    out.text[out.length] = '\0';
     return out;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -444,7 +442,7 @@ weu_string *weu_string_getLine(weu_string *s) {
     return out;
 }
 weu_stringNA weu_string_getLineNA(weu_string *s) {
-    if (s == NULL) return (weu_stringNA){0, 0, 0};
+    if (s == NULL) return (weu_stringNA){.length = 0, .text = ""};
     int charPointer = s->charPtrPos;
     while (charPointer < s->length) {
         if (s->text[charPointer] == '\n' || s->text[charPointer] == '\0') break;
@@ -472,7 +470,7 @@ weu_string *weu_string_cutLine(weu_string *s) {
     return out;
 }
 weu_stringNA weu_string_cutLineNA(weu_string *s) {
-    if (s == NULL) return (weu_stringNA){0, 0, 0};
+    if (s == NULL) return (weu_stringNA){.length = 0, .text = ""};
     int isNewLine = 0;
     int charPointer = 0;
     while (charPointer < s->length) {
@@ -567,13 +565,13 @@ weu_string *weu_string_uint(uint32_t val) {
 }
 weu_string *weu_string_llong(int64_t val) {
     char buffer[64];
-    sprintf(buffer, "%lld", val);
+    sprintf(buffer, "%ld", val);
     weu_string *out = weu_string_new(buffer);
     return out;
 }
 weu_string *weu_string_ullong(uint64_t val) {
     char buffer[64];
-    sprintf(buffer, "%llu", val);
+    sprintf(buffer, "%lu", val);
     weu_string *out = weu_string_new(buffer);
     return out;
 }
@@ -595,12 +593,12 @@ weu_stringNA weu_string_uintNA(uint32_t val) {
 }
 weu_stringNA weu_string_llongNA(int64_t val) {
     char buffer[64];
-    sprintf(buffer, "%lld", val);
+    sprintf(buffer, "%ld", val);
     return weu_stringNA_newText(buffer);
 }
 weu_stringNA weu_string_ullongNA(uint64_t val) {
     char buffer[64];
-    sprintf(buffer, "%llu", val);
+    sprintf(buffer, "%lu", val);
     return weu_stringNA_newText(buffer);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////

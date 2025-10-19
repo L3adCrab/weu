@@ -40,7 +40,7 @@
 
 WEUDEF weu_list *weu_list_new(unsigned int size, datafreefun d);
 WEUDEF void weu_list_free(weu_list **h);
-WEUDEF void weu_list_resize(weu_list *h, unsigned int size, bool freeOOB);
+WEUDEF void weu_list_resize(weu_list *h, int size, bool freeOOB);
 WEUDEF void weu_list_freeData(weu_list *h, int index);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  FREE
@@ -104,7 +104,7 @@ void weu_list_free(weu_list **h) {
     free(*h);
     *h = NULL;
 }
-void weu_list_resize(weu_list *h, unsigned int size, bool freeOOB) {
+void weu_list_resize(weu_list *h, int size, bool freeOOB) {
     if (h == NULL) return;
     size = size > 0 ? size : 0;
     if (freeOOB) {
@@ -162,7 +162,7 @@ void weu_list_insertData(weu_list *h, int index, void *data) {
 //  If free is set to 0/FALSE returns pointer to data
 void *weu_list_removeData(weu_list *h, int index, bool free) {
     if (h == NULL || index < 0 || index >= h->length) return NULL;
-    void *out;
+    void *out = NULL;
     if (!free) {
         out = h->data[index];
     }
@@ -174,7 +174,7 @@ void *weu_list_removeData(weu_list *h, int index, bool free) {
         h->data[i] = h->data[i + 1];
     }
     weu_list_resize(h, h->length - 1, false);
-    return NULL;
+    return out;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  BEG
@@ -243,7 +243,8 @@ void weu_list_removeFromTo(weu_list *h, int from, int to, bool free) {
     int diff = to - from;
     if (diff < 0) return;
     for (int i = 0; i < diff; i++) {
-        weu_list_freeData(h, from + i);
+        if (free) weu_list_freeData(h, from + i);
+        else h->data[from + i] = NULL;
     }
     for (int i = to; i < h->length; i++) {
         h->data[i - diff] = h->data[i]; 

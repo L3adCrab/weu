@@ -35,17 +35,17 @@
 #include <stdio.h>
 
 #define SET_BIT8(X, N)      (X |= 0x01 << N)
-#define CLEAR_BIT8(X, N)    (X &= ~0x01 << N)
+#define CLEAR_BIT8(X, N)    (X &= ~0x01U << N)
 #define TOGGLE_BIT8(X, N)   (X ^= 0x01 << N)
 #define IS_SET_BIT8(X, N)   ((X >> N) & 0x1)
 
 #define SET_BIT32(X, N)     (X |= 0x00000001 << N)
-#define CLEAR_BIT32(X, N)   (X &= ~0x00000001 << N)
+#define CLEAR_BIT32(X, N)   (X &= ~0x00000001U << N)
 #define TOGGLE_BIT32(X, N)  (X ^= 0x00000001 << N)
 #define IS_SET_BIT32(X, N)  ((X >> N) & 0x1)
 
 #define SET_BIT64(X, N)     (X |= (weu_bitfield_64)0x0000000000000001 << N)
-#define CLEAR_BIT64(X, N)   (X &= ~(weu_bitfield_64)0x0000000000000001 << N)
+#define CLEAR_BIT64(X, N)   (X &= ~(weu_bitfield_64)0x0000000000000001U << N)
 #define TOGGLE_BIT64(X, N)  (X ^= (weu_bitfield_64)0x0000000000000001 << N)
 #define IS_SET_BIT64(X, N)  ((X >> N) & 0x1)
 
@@ -174,6 +174,7 @@ WEUDEF void weu_bitfield_seg64_print(weu_bitfield_64seg *bf);
 WEUDEF void _print_bitfield(unsigned long long bf, unsigned long long mask, int bc);
 
 #ifdef WEU_IMPLEMENTATION
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  PRINT
 /////////////////////////////////////////////////////////////////////////////////////////////////////

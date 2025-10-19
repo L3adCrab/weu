@@ -64,6 +64,6 @@ typedef struct weu_pair             { void *v1, *v2; datafreefun d1, d2; }  weu_
 //  HASHTABLE
 
 typedef struct weu_hashItem         { weu_string *key; void *value; bool inUse; }       weu_hashItem;
-typedef struct weu_hashTable        { int length; weu_hashItem *data; datafreefun d; }  weu_hashTable;
+typedef struct weu_hashTable        { uint32_t length; weu_hashItem *data; datafreefun d; }  weu_hashTable;
 
 #endif

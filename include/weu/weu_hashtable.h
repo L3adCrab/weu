@@ -42,18 +42,18 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  HASH
 
-WEUDEF unsigned int weu_hash_FNV(const char *str, unsigned int len);
+WEUDEF unsigned int weu_hash_FNV(const char *str, int strLen);
 WEUDEF unsigned int weu_hash_strFNV(weu_string *str);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  ALLOCATION
 
-WEUDEF weu_hashTable *weu_hashtable_new(unsigned int size, datafreefun d);
+WEUDEF weu_hashTable *weu_hashtable_new(int size, datafreefun d);
 WEUDEF void weu_hashtable_free(weu_hashTable **handle);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  DATA
 
 WEUDEF void* weu_hashtable_getValue(weu_hashTable *table, weu_string *key, bool freeKeyOnDone);
-WEUDEF void* weu_hashtable_getValueByIndex(weu_hashTable *table, int index);
+WEUDEF void* weu_hashtable_getValueByIndex(weu_hashTable *table, unsigned int index);
 
 WEUDEF void weu_hashtable_addItem(weu_hashTable *table, weu_string *key, void *value, bool freeKeyOnDone);
 WEUDEF void weu_hashtable_removeItem(weu_hashTable *table, weu_string *key, bool freeKeyOnDone);
@@ -61,12 +61,12 @@ WEUDEF void weu_hashtable_removeItem(weu_hashTable *table, weu_string *key, bool
 //  INDEX
 
 WEUDEF int weu_hashtable_getUsableIndex(weu_hashTable *table, weu_string *key, bool freeKeyOnDone);
-WEUDEF void weu_hashtable_setDataAtIndex(weu_hashTable *table, int index, weu_string *key, void *data, bool freeKeyOnDone);
-WEUDEF void weu_hashtable_removeItemAtIndex(weu_hashTable *table, int index);
+WEUDEF void weu_hashtable_setDataAtIndex(weu_hashTable *table, unsigned int index, weu_string *key, void *data, bool freeKeyOnDone);
+WEUDEF void weu_hashtable_removeItemAtIndex(weu_hashTable *table, unsigned int index);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  GET KEY
 
-WEUDEF weu_string* weu_hashtable_getKeyByIndex(weu_hashTable *table, int index);
+WEUDEF weu_string* weu_hashtable_getKeyByIndex(weu_hashTable *table, unsigned int index);
 WEUDEF int weu_hashtable_getKeyIndex(weu_hashTable *table, weu_string *key, bool freeKeyOnDone);
 
 #ifdef WEU_IMPLEMENTATION
@@ -74,9 +74,9 @@ WEUDEF int weu_hashtable_getKeyIndex(weu_hashTable *table, weu_string *key, bool
 //  HASH
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-unsigned int weu_hash_FNV(const char *str, unsigned int len) {
+unsigned int weu_hash_FNV(const char *str, int strlen) {
     uint32_t hash = FNV_OFF_BASIS_32;
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; i < strlen; i++) {
         hash ^= str[i];
         hash *= FNV_PRIME_32;
     }
@@ -89,7 +89,7 @@ unsigned int weu_hash_strFNV(weu_string *str) {
 //  ALLOCATION
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-weu_hashTable *weu_hashtable_new(unsigned int size, datafreefun d) {
+weu_hashTable *weu_hashtable_new(int size, datafreefun d) {
     size = size > MIN_TABLE_SIZE ? size : MIN_TABLE_SIZE;
     weu_hashTable *out = (weu_hashTable*)malloc(sizeof(weu_hashTable));
     out->length = size;
@@ -104,7 +104,7 @@ weu_hashTable *weu_hashtable_new(unsigned int size, datafreefun d) {
 }
 void weu_hashtable_free(weu_hashTable **handle) {
     weu_hashTable *table = (*handle);
-    for (int i = 0; i < table->length; i++) {
+    for (unsigned int i = 0; i < table->length; i++) {
         weu_string_free(&table->data[i].key);
         if (table->d != NULL) table->d(&table->data[i].value);
     }
@@ -119,7 +119,7 @@ void weu_hashtable_free(weu_hashTable **handle) {
 void* weu_hashtable_getValue(weu_hashTable *table, weu_string *key, bool freeKeyOnDone) {
     if (table == NULL || key == NULL) return NULL;
     unsigned int hashValue = weu_hash_strFNV(key) % table->length;
-    int position    = hashValue;
+    unsigned int position    = hashValue;
     int containsKey = 0;
     void *out       = NULL;
     do
@@ -135,15 +135,15 @@ void* weu_hashtable_getValue(weu_hashTable *table, weu_string *key, bool freeKey
     if (freeKeyOnDone) weu_string_free(&key);
     return out;
 }
-void* weu_hashtable_getValueByIndex(weu_hashTable *table, int index) {
-    if (index < 0 || index >= table->length) return NULL;
+void* weu_hashtable_getValueByIndex(weu_hashTable *table, unsigned int index) {
+    if (index >= table->length) return NULL;
     return table->data[index].value;
 }
 
 void weu_hashtable_addItem(weu_hashTable *table, weu_string *key, void *value, bool freeKeyOnDone) {
     if (table == NULL || key == NULL) return;
     unsigned int hashValue = weu_hash_strFNV(key) % table->length;
-    int position = hashValue;
+    unsigned int position = hashValue;
     do
     {
         if (position >= table->length) position = 0;
@@ -163,7 +163,7 @@ void weu_hashtable_addItem(weu_hashTable *table, weu_string *key, void *value, b
 void weu_hashtable_removeItem(weu_hashTable *table, weu_string *key, bool freeKeyOnDone) {
     if (table == NULL || key == NULL) return;
     unsigned int hashValue = weu_hash_strFNV(key) % table->length;
-    int position    = hashValue;
+    unsigned int position    = hashValue;
     int containsKey = 0;
     do
     {
@@ -187,7 +187,7 @@ void weu_hashtable_removeItem(weu_hashTable *table, weu_string *key, bool freeKe
 int weu_hashtable_getUsableIndex(weu_hashTable *table, weu_string *key, bool freeKeyOnDone) {
     if (table == NULL || key == NULL) return -1;
     unsigned int hashValue = weu_hash_strFNV(key) % table->length;
-    int position = hashValue;
+    unsigned int position = hashValue;
     do
     {
         if (position >= table->length) position = 0;
@@ -203,8 +203,8 @@ int weu_hashtable_getUsableIndex(weu_hashTable *table, weu_string *key, bool fre
     if (freeKeyOnDone) weu_string_free(&key);
     return position;
 }
-void weu_hashtable_setDataAtIndex(weu_hashTable *table, int index, weu_string *key, void *data, bool freeKeyOnDone) {
-    if (index < 0 || index >= table->length) return;
+void weu_hashtable_setDataAtIndex(weu_hashTable *table, unsigned int index, weu_string *key, void *data, bool freeKeyOnDone) {
+    if (index >= table->length) return;
     if (table->data[index].inUse) {
         weu_hashtable_removeItemAtIndex(table, index);    
     }
@@ -213,8 +213,8 @@ void weu_hashtable_setDataAtIndex(weu_hashTable *table, int index, weu_string *k
     table->data[index].value = data;
     if (freeKeyOnDone) weu_string_free(&key);
 }
-void weu_hashtable_removeItemAtIndex(weu_hashTable *table, int index) {
-    if (table == NULL || index < 0 || index >= table->length) return;
+void weu_hashtable_removeItemAtIndex(weu_hashTable *table, unsigned int index) {
+    if (table == NULL || index >= table->length) return;
     table->data[index].inUse = false;
     if (table->d != NULL) table->d(&table->data[index].value);
     table->data[index].value = NULL;
@@ -223,15 +223,15 @@ void weu_hashtable_removeItemAtIndex(weu_hashTable *table, int index) {
 //  GET KEY
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-weu_string* weu_hashtable_getKeyByIndex(weu_hashTable *table, int index) {
-    if (index < 0 || index >= table->length) return NULL;
+weu_string* weu_hashtable_getKeyByIndex(weu_hashTable *table, unsigned int index) {
+    if (index >= table->length) return NULL;
     return table->data[index].key;
 }
 int weu_hashtable_getKeyIndex(weu_hashTable *table, weu_string *key, bool freeKeyOnDone) {
     if (table == NULL || key == NULL) return -1;
     unsigned int hashValue = weu_hash_strFNV(key) % table->length;
+    unsigned int position    = hashValue;
     int out         = -1;
-    int position    = hashValue;
     do
     {
         if (position >= table->length) position = 0;
