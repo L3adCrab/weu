@@ -86,6 +86,13 @@ WEUDEF weu_stringNA weu_string_cutFromToNA(weu_string *s, int from, int to);
 
 WEUDEF void weu_string_deleteFromTo(weu_string *s, int from, int to);
 WEUDEF void weu_string_overwriteFromTo(weu_string *s, int from, int to, const char *text);
+
+WEUDEF bool weu_string_containsText(weu_string *s, const char *text);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  STRING CHAR POINTER
+
+WEUDEF int weu_string_getPointerPos(weu_string *s);
+WEUDEF void weu_string_setPointerPos(weu_string *s, int pos);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  FILL
 
@@ -318,6 +325,45 @@ void weu_string_overwriteFromTo(weu_string *s, int from, int to, const char *tex
     int len = weu_string_textLength(text);
     len = to - from < len ? to - from : len;
     memcpy(s->text + from, text, len);
+}
+
+bool weu_string_containsText(weu_string *s, const char *text) {
+    if (s == NULL || text == NULL) return false;
+    int textLen = weu_string_textLength(text);
+    bool contains = false;
+    int pos = s->charPtrPos;
+    for (; pos < s->length; pos++)
+    {
+        if ( s->text[pos] == text[0] ) {
+            int i = 1;
+            for (; i < textLen; i++)
+            {
+                if (s->text[pos + i] != text[i]) {
+                    pos += i;
+                    i = -1;
+                    break;
+                }
+            }
+            if (i != -1) { 
+                contains = true;
+                break;
+            };
+        }
+    }
+    s->charPtrPos = pos;
+    return contains;
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  STRING CHAR POINTER
+
+int weu_string_getPointerPos(weu_string *s) {
+    if (s == NULL) return -1;
+    return s->charPtrPos;
+}
+void weu_string_setPointerPos(weu_string *s, int pos) {
+    if (s == NULL) return;
+    pos = pos < 0 ? 0 : pos >= s->length ? s->length - 1 : pos;
+    s->charPtrPos = pos;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  FILL
