@@ -20,6 +20,15 @@
 #ifndef weu_datatypes_h
 #define weu_datatypes_h
 
+#ifndef WEUDEF
+    #ifdef WEU_STATIC
+        #define WEUDEF static
+        #define WEU_IMPLEMENTATION
+    #else
+        #define WEUDEF extern
+    #endif
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -33,7 +42,12 @@
 //   free(*handle);
 //   **handle = NULL;
 // }
-typedef void   (*datafreefun)       ( void**);
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  FUNCTIONS POINTERS
+
+typedef void (*datafreefun) ( void**);
+typedef bool (*datacompfun) ( void*, void* );
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  BITFIELD
 
@@ -51,19 +65,58 @@ typedef struct weu_string           { int length; char *text; uint32_t charPtrPo
 // string no allocation
 // Stores up to 511 characters,
 // 512 including null terminator.
-typedef struct weu_stringNA         { int length; char text[512];} weu_stringNA;
+typedef struct weu_stringNA         { int length; char text[512]; }                     weu_stringNA;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  LIST
 
-typedef struct weu_list             { int length; void **data; datafreefun d; } weu_list;
+typedef struct weu_list             { uint32_t length; uint32_t allocatedLength; void **data; datafreefun d; } weu_list;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  PAIR
 
-typedef struct weu_pair             { void *v1, *v2; datafreefun d1, d2; }  weu_pair;
+typedef struct weu_pair             { void *v1, *v2; datafreefun d1, d2; }      weu_pair;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  HASHTABLE
 
-typedef struct weu_hashItem         { weu_string *key; void *value; bool inUse; }       weu_hashItem;
-typedef struct weu_hashTable        { uint32_t length; weu_hashItem *data; datafreefun d; }  weu_hashTable;
+typedef struct weu_hashItem         { weu_string *key; void *value; bool inUse; }           weu_hashItem;
+typedef struct weu_hashTable        { uint32_t length; weu_hashItem *data; datafreefun d; } weu_hashTable;
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  ALLOCATE PRIMARY TYPES
 
+WEUDEF int32_t *weu_allocInt(int32_t value);
+WEUDEF uint32_t *weu_allocUInt(uint32_t value);
+WEUDEF int64_t *weu_allocLong(int64_t value);
+WEUDEF uint64_t *weu_allocULong(uint64_t value);
+WEUDEF float *weu_allocFloat(float value);
+
+#ifdef WEU_IMPLEMENTATION
+
+#include <stdlib.h>
+
+int32_t *weu_allocInt(int32_t value) {
+    int32_t *out = (int32_t*)malloc(sizeof(int32_t));
+    *out = value;
+    return out;
+}
+uint32_t *weu_allocUInt(uint32_t value) {
+    uint32_t *out = (uint32_t*)malloc(sizeof(uint32_t));
+    *out = value;
+    return out;
+}
+int64_t *weu_allocLong(int64_t value) {
+    int64_t *out = (int64_t*)malloc(sizeof(int64_t));
+    *out = value;
+    return out;
+}
+uint64_t *weu_allocULong(uint64_t value) {
+    uint64_t *out = (uint64_t*)malloc(sizeof(uint64_t));
+    *out = value;
+    return out;
+}
+float *weu_allocFloat(float value) {
+    float *out = (float*)malloc(sizeof(float));
+    *out = value;
+    return out;
+}
+
+#endif
 #endif
