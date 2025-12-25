@@ -61,7 +61,7 @@ typedef struct weu_bitfield_64seg   { char segmentCount; weu_bitfield_64 *b; }  
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  STRING
 
-typedef struct weu_string           { int length; char *text; uint32_t charPtrPos; }    weu_string;
+typedef struct weu_string           { int length; char *text; uint32_t charPtrPos; int allocLength; }    weu_string;
 // string no allocation
 // Stores up to 511 characters,
 // 512 including null terminator.
@@ -82,16 +82,28 @@ typedef struct weu_hashTable        { uint32_t length; weu_hashItem *data; dataf
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  ALLOCATE PRIMARY TYPES
 
-WEUDEF int32_t *weu_allocInt(int32_t value);
+WEUDEF int8_t   *weu_allocChar(int8_t value);
+WEUDEF uint8_t  *weu_allocUChar(uint8_t value);
+WEUDEF int32_t  *weu_allocInt(int32_t value);
 WEUDEF uint32_t *weu_allocUInt(uint32_t value);
-WEUDEF int64_t *weu_allocLong(int64_t value);
+WEUDEF int64_t  *weu_allocLong(int64_t value);
 WEUDEF uint64_t *weu_allocULong(uint64_t value);
-WEUDEF float *weu_allocFloat(float value);
+WEUDEF float    *weu_allocFloat(float value);
 
 #ifdef WEU_IMPLEMENTATION
 
 #include <stdlib.h>
 
+int8_t   *weu_allocChar(int8_t value) {
+    int8_t *out = (int8_t*)malloc(sizeof(int8_t));
+    *out = value;
+    return out;
+}
+uint8_t  *weu_allocUChar(uint8_t value) {
+    uint8_t *out = (uint8_t*)malloc(sizeof(uint8_t));
+    *out = value;
+    return out;
+}
 int32_t *weu_allocInt(int32_t value) {
     int32_t *out = (int32_t*)malloc(sizeof(int32_t));
     *out = value;
