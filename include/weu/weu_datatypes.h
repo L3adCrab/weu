@@ -32,6 +32,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#ifndef SWAPVAR
+#define SWAPVAR(A, B, TMP) { TMP = B; B = A; A = TMP; }
+#endif
+
 // Function pointer used for freeing memory of data contained in list, pair and hashtable.
 // If data is construced in a way free function from stdlib is enough pass - weu_stdFree
 // 
@@ -61,11 +65,11 @@ typedef struct weu_bitfield_64seg   { char segmentCount; weu_bitfield_64 *b; }  
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  STRING
 
-typedef struct weu_string           { int length; char *text; uint32_t charPtrPos; int allocLength; }    weu_string;
+typedef struct weu_string           { uint32_t length; char *text; uint32_t charPtrPos; uint32_t allocLength; }    weu_string;
 // string no allocation
 // Stores up to 511 characters,
 // 512 including null terminator.
-typedef struct weu_stringNA         { int length; char text[512]; }                     weu_stringNA;
+typedef struct weu_stringNA         { uint32_t length; char text[512]; }                     weu_stringNA;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  LIST
 

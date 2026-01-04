@@ -61,17 +61,17 @@ WEUDEF bool weu_list_containsValue(weu_list *h, void *value, uint32_t *outIndex,
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  BEG
 
-//  Insert data at front of the weu_list
+//  Insert data at front of the list
 WEUDEF void weu_list_unshift(weu_list *h, void *data);
-//  Remove data at front of the weu_list
+//  Remove data at front of the list
 //  If free is set to 0/FALSE returns pointer to data
 WEUDEF void *weu_list_shift(weu_list *h, bool freeData);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  END
 
-//  Insert data at the end of the weu_list
+//  Insert data at the end of the list
 WEUDEF void weu_list_push(weu_list *h, void *data);
-//  Remove data from the end of the weu_list
+//  Remove data from the end of the list
 //  If free is set to 0/FALSE returns pointer to data
 WEUDEF void *weu_list_pop(weu_list *h, bool freeData);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -206,7 +206,7 @@ bool weu_list_containsValue(weu_list *h, void *value, uint32_t *outIndex, dataco
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  BEG
 
-//  Insert data at front of the weu_list
+//  Insert data at front of the list
 void weu_list_unshift(weu_list *h, void *data) {
     if (h == NULL) return;
     h->length++;
@@ -217,7 +217,7 @@ void weu_list_unshift(weu_list *h, void *data) {
     }
     h->data[0] = data;
 }
-//  Remove data at front of the weu_list
+//  Remove data at front of the list
 //  If free is set to 0/FALSE returns pointer to data
 void *weu_list_shift(weu_list *h, bool freeData) {
     if (h == NULL || h->length == 0) return NULL;
@@ -236,13 +236,13 @@ void *weu_list_shift(weu_list *h, bool freeData) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  END
 
-//  Insert data at the end of the weu_list
+//  Insert data at the end of the list
 void weu_list_push(weu_list *h, void *data) {
     if (h == NULL) return;
     weu_list_resize(h, h->length + 1, 0);
     h->data[h->length - 1] = data;
 }
-//  Remove data from the end of the weu_list
+//  Remove data from the end of the list
 //  If free is set to 0/FALSE returns pointer to data
 void *weu_list_pop(weu_list *h, bool freeData) {
     if (h == NULL || h->length == 0) return NULL;

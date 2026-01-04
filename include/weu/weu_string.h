@@ -29,8 +29,17 @@
     #endif
 #endif
 
+#ifndef TEXT_CTRL
+#define TEXT_CTRL
+#define END_CH 3
+#define EC END_CH
+#define STR_END "\3"
+#define SE STR_END
+#endif
+
 #include "weu_datatypes.h"
 #include "weu_list.h"
+#include "weu_bitfield.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -44,78 +53,88 @@
 #define STRY(X)     (#X)
 //  token pasting
 #define TOKP(X, Y)  (X#Y)
-#define SETLENRANGE(L, Min, Max) L = (int)L < Min ? Min : L > Max ? Max : L
+#define SETLENRANGE(L, Min, Max) L = (uint32_t)L <= Min ? Min : L > Max ? Max : L
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  ALLOCATION
 
-WEUDEF weu_string *weu_string_newSize(int length);
+WEUDEF weu_string *weu_string_newSize(uint32_t length);
 WEUDEF weu_string *weu_string_new(const char *text);
+WEUDEF weu_string *weu_string_newChar(char c);
 WEUDEF weu_string *weu_string_copy(const weu_string *str);
 
-WEUDEF void weu_string_resize(weu_string *s, int length, char emptyFill);
+//  Return copy of string with same memory of text
+//  Should not be edited or passed in funtions that eddit string(non const)
+//  Printf will still print until original strings termiantor
+WEUDEF weu_string weu_string_slice(const weu_string *s, uint32_t from, uint32_t to);
+
+WEUDEF void weu_string_resize(weu_string *s, uint32_t length, char emptyFill);
 
 WEUDEF void weu_string_free(weu_string **data);
 WEUDEF void weu_string_listFree(void **data);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  NON ALLOC
 
-WEUDEF weu_stringNA weu_stringNA_newSize(int length);
-WEUDEF weu_stringNA weu_stringNA_newString(weu_string *str);
-WEUDEF weu_stringNA weu_stringNA_newText(const char *text);
+WEUDEF weu_stringNA weu_stringNA_newSize(uint32_t length);
+WEUDEF weu_stringNA weu_stringNA_new(const char *text);
+WEUDEF weu_stringNA weu_stringNA_newChar(char c);
+WEUDEF weu_stringNA weu_stringNA_newString(const weu_string *str);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  LENGTH
 
-WEUDEF int weu_string_stringLength(const weu_string *data);
-WEUDEF int weu_string_textLength(const char *text);
+WEUDEF uint32_t weu_string_stringLength(const weu_string *data);
+WEUDEF uint32_t weu_string_textLength(const char *text);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  COMPARISON
 
-WEUDEF int weu_string_matches(const weu_string *s1, const weu_string *s2);
-WEUDEF int weu_string_textMatches(const char *text1, const char *text2);
+WEUDEF bool weu_string_matches(const weu_string *s1, const weu_string *s2);
+WEUDEF bool weu_string_textMatches(const char *text1, const char *text2);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-//  TEXT
+//  STRING
 
 WEUDEF void weu_string_setText(weu_string *s, const char *text);
 WEUDEF void weu_string_setTextNA(weu_stringNA *s, const char *text);
 
-WEUDEF weu_string *weu_string_fromTo(const weu_string *s, int from, int to);
-WEUDEF weu_stringNA weu_string_fromToNA(const weu_string *s, int from, int to);
+WEUDEF weu_string *weu_string_fromTo(const weu_string *s, uint32_t from, uint32_t to);
+WEUDEF weu_string *weu_string_cutFromTo(weu_string *s, uint32_t from, uint32_t to);
 
-WEUDEF weu_string *weu_string_cutFromTo(weu_string *s, int from, int to);
-WEUDEF weu_stringNA weu_string_cutFromToNA(weu_string *s, int from, int to);
+WEUDEF weu_stringNA weu_string_fromToNA(const weu_string *s, uint32_t from, uint32_t to);
+WEUDEF weu_stringNA weu_string_cutFromToNA(weu_string *s, uint32_t from, uint32_t to);
 
-WEUDEF void weu_string_removeFromTo(weu_string *s, int from, int to);
-WEUDEF void weu_string_overwriteFromTo(weu_string *s, int from, int to, const char *text);
+WEUDEF weu_string *weu_string_textFromTo(const char *text, uint32_t from, uint32_t to);
+WEUDEF weu_stringNA weu_stringNA_textFromTo(const char *text, uint32_t from, uint32_t to);
 
-WEUDEF bool weu_string_containsText(weu_string *s, const char *text);
-WEUDEF bool weu_stringNA_containsText(weu_stringNA *s, const char *text);
+WEUDEF void weu_string_removeFromTo(weu_string *s, uint32_t from, uint32_t to);
+WEUDEF void weu_string_overwriteFromTo(weu_string *s, uint32_t from, uint32_t to, const char *text);
+
+WEUDEF bool weu_string_containsText(const weu_string *s, const char *text);
+WEUDEF bool weu_stringNA_containsText(const weu_stringNA *s, const char *text);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  STRING CHAR POINTER
 
-WEUDEF int weu_string_getPointerPos(weu_string *s);
-WEUDEF void weu_string_setPointerPos(weu_string *s, int pos);
+WEUDEF uint32_t weu_string_getPointerPos(const weu_string *s);
+WEUDEF void weu_string_setPointerPos(weu_string *s, uint32_t pos);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  FILL
 
-WEUDEF void weu_string_fill(weu_string *s, char fillChar, int from, int to);
+WEUDEF void weu_string_fill(weu_string *s, char fillChar, uint32_t from, uint32_t to);
 
-WEUDEF weu_string *weu_string_filled(char fillChar, int len);
-WEUDEF weu_stringNA weu_stringNA_filled(char fillChar, int len);
+WEUDEF weu_string *weu_string_filled(char fillChar, uint32_t len);
+WEUDEF weu_stringNA weu_stringNA_filled(char fillChar, uint32_t len);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  CONCATE
 
-WEUDEF void weu_string_concateString(weu_string *s, int count, ...);
-WEUDEF void weu_string_concateStringNA(weu_string *s, int count, ...);
-WEUDEF void weu_string_concateText(weu_string *s, int count, ...);
+WEUDEF void weu_string_concateString(weu_string *s, uint8_t count, ...);
+WEUDEF void weu_string_concateStringNA(weu_string *s, uint8_t count, ...);
+WEUDEF void weu_string_concateText(weu_string *s, uint8_t count, ...);
 
-WEUDEF weu_stringNA weu_stringNA_concatedString(int count, ...);
-WEUDEF weu_stringNA weu_stringNA_concatedStringNA(int count, ...);
-WEUDEF weu_stringNA weu_stringNA_concatedText(int count, ...);
+WEUDEF weu_stringNA weu_stringNA_concatedString(uint8_t count, ...);
+WEUDEF weu_stringNA weu_stringNA_concatedStringNA(uint8_t count, ...);
+WEUDEF weu_stringNA weu_stringNA_concatedText(uint8_t count, ...);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  LINE
 
-WEUDEF weu_string *weu_string_getLine(weu_string *s);
-WEUDEF weu_stringNA weu_string_getLineNA(weu_string *s);
+WEUDEF weu_string *weu_string_getLine(const weu_string *s);
+WEUDEF weu_stringNA weu_string_getLineNA(const weu_string *s);
 
 WEUDEF weu_string *weu_string_cutLine(weu_string *s);
 WEUDEF weu_stringNA weu_string_cutLineNA(weu_string *s);
@@ -128,12 +147,45 @@ WEUDEF weu_list *weu_string_splitByText(const weu_string *s, const char *text);
 //  INDENTATION
 
 WEUDEF void weu_string_addIndent(weu_string *s, uint8_t count, uint8_t spaceCount);
-WEUDEF weu_string *weu_string_addedIndent(weu_string *s, uint8_t count, uint8_t spaceCount);
+WEUDEF weu_string *weu_string_addedIndent(const weu_string *s, uint8_t count, uint8_t spaceCount);
 
 WEUDEF void weu_string_removeIndent(weu_string *s);
-WEUDEF weu_string *weu_string_removedIndent(weu_string *s);
-WEUDEF weu_stringNA weu_string_removeIndentNA(weu_string *s);
-WEUDEF weu_stringNA weu_stringNA_removeIndent(weu_stringNA s);
+WEUDEF weu_string *weu_string_removedIndent(const weu_string *s);
+WEUDEF weu_stringNA weu_string_removedIndentNA(const weu_string *s);
+WEUDEF weu_stringNA weu_stringNA_removeIndent(const weu_stringNA s);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  EXPRESSION
+
+/* varyingStringOut - if passed in created list, pushes variable strings to it
+isMatching - if passed reference to bitfield_32 sets successful varying string test bits to 1
+
+#expression features
+%c - test single character
+%s - test string, reads testable string until \3 or STR_END/SE character, or \0
+Returns as fail if string length is 0
+
+test conditions shiuld be in sqare brackets after char of string identifiers
+example - %c[condition]
+
+#conditions
+is char in range - [a-zA-Z]
+if char out of range - [!a-z]
+if char is any of - [abcd]
+if char is not any of - [!abcd]
+
+can be mixed - [a-z!A-Z0123!567]
+test0string - true
+Test7String - false
+tests for not take priotity
+
+#example
+string - "Test string\3 example - 0"
+expression - "Test %s[a-z] example - %c[!0-9]"
+return false
+varying out - {string, 0} */
+WEUDEF bool weu_string_textMatchesExpression(const char *text, const char *expression, weu_list *varyingStringOut, weu_bitfield_32 *isMatching);
+WEUDEF bool weu_string_charMatchesCondition(const uint8_t c, const char *condition);
+WEUDEF bool weu_string_textMatchesCondition(const char *text, const char *condition);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  PARSE
 
@@ -161,11 +213,13 @@ WEUDEF void weu_string_printText(int count, ...);
 
 #ifdef WEU_IMPLEMENTATION
 
+#define INVALID 0xffffffff
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  ALLOCATION
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-weu_string *weu_string_newSize(int length) {
+weu_string *weu_string_newSize(uint32_t length) {
     weu_string *out     = (weu_string*)malloc(sizeof(weu_string));
     out->length         = length;
     out->allocLength    = length;
@@ -179,6 +233,11 @@ weu_string *weu_string_new(const char *text) {
     memcpy(out->text, text, length);
     return out;
 }
+weu_string *weu_string_newChar(char c) {
+    weu_string *out = weu_string_newSize(1);
+    out->text[0] = c;
+    return out;
+}
 weu_string *weu_string_copy(const weu_string *str) {
     if (str == NULL) return NULL;
     weu_string *out = weu_string_newSize(str->length);
@@ -186,7 +245,14 @@ weu_string *weu_string_copy(const weu_string *str) {
     return out;
 }
 
-void weu_string_resize(weu_string *s, int length, char emptyFill) {
+weu_string weu_string_slice(const weu_string *s, uint32_t from, uint32_t to) {
+    if (s == NULL) return (weu_string){0};
+    if (from > to) {uint32_t temp; SWAPVAR(from, to, temp); }
+    if (to > s->length) to = s->length;
+    return (weu_string){.allocLength = 0, .charPtrPos = from, .length = to - from, .text = s->text + from};
+}
+
+void weu_string_resize(weu_string *s, uint32_t length, char emptyFill) {
     s->text = (char*)realloc(s->text, length + 1);
     if (s->length < length) {
         memset(s->text + s->length, emptyFill, length - s->length);
@@ -212,22 +278,14 @@ void weu_string_listFree(void **data) {
 //  NON ALLOC
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-weu_stringNA weu_stringNA_newSize(int length) {
+weu_stringNA weu_stringNA_newSize(uint32_t length) {
     weu_stringNA out;
     SETLENRANGE(length, 0, 511);
     out.length          = length;
     out.text[length]    = '\0';
     return out;
 }
-weu_stringNA weu_stringNA_newString(weu_string *str) {
-    weu_stringNA out;
-    out.length = str->length;
-    SETLENRANGE(out.length, 0, 511);
-    memcpy(out.text, str->text, out.length);
-    out.text[out.length] = '\0';
-    return out;
-}
-weu_stringNA weu_stringNA_newText(const char *text) {
+weu_stringNA weu_stringNA_new(const char *text) {
     weu_stringNA out;
     uint32_t textLen = weu_string_textLength(text);
     SETLENRANGE(textLen, 0, 511);
@@ -236,31 +294,46 @@ weu_stringNA weu_stringNA_newText(const char *text) {
     out.length = textLen;
     return out;
 }
+weu_stringNA weu_stringNA_newChar(char c) {
+    weu_stringNA out;
+    out.length = 1;
+    out.text[0] = c;
+    out.text[1] = '\0';
+    return out;
+}
+weu_stringNA weu_stringNA_newString(const weu_string *str) {
+    weu_stringNA out;
+    out.length = str->length;
+    SETLENRANGE(out.length, 0, 511);
+    memcpy(out.text, str->text, out.length);
+    out.text[out.length] = '\0';
+    return out;
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  LENGTH
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int weu_string_stringLength(const weu_string *data) {
+uint32_t weu_string_stringLength(const weu_string *data) {
     if (data == NULL) return -1;
     return data->length;
 }
-int weu_string_textLength(const char *text) {
+uint32_t weu_string_textLength(const char *text) {
     return strlen(text);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  COMPARISON
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int weu_string_matches(const weu_string *s1, const weu_string *s2) {
+bool weu_string_matches(const weu_string *s1, const weu_string *s2) {
     if (s1 == NULL || s2 == NULL) return 0;
     if (s1->length != s2->length) return 0;
     return strcmp(s1->text, s2->text) == 0 ? 1 : 0;
 }
-int weu_string_textMatches(const char *text1, const char *text2) {
+bool weu_string_textMatches(const char *text1, const char *text2) {
     return strcmp(text1, text2) == 0 ? 1 : 0;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
-//  TEXT
+//  STRING
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void weu_string_setText(weu_string *s, const char *text) {
@@ -280,7 +353,7 @@ void weu_string_setTextNA(weu_stringNA *s, const char *text) {
     s->text[len] = '\0';
 }
 
-weu_string *weu_string_fromTo(const weu_string *s, int from, int to) {
+weu_string *weu_string_fromTo(const weu_string *s, uint32_t from, uint32_t to) {
     if (s == NULL) return NULL;
     from = from > 0 ? from : 0;
     to = to > from ? (to < s->length ? to : s->length) : from;
@@ -289,7 +362,18 @@ weu_string *weu_string_fromTo(const weu_string *s, int from, int to) {
     memcpy(out->text, s->text + from, len);
     return out;
 }
-weu_stringNA weu_string_fromToNA(const weu_string *s, int from, int to) {
+weu_string *weu_string_cutFromTo(weu_string *s, uint32_t from, uint32_t to) {
+    if (s == NULL) return NULL;
+    from = from > 0 ? from : 0;
+    to = to > from ? (to < s->length ? to : s->length) : from;
+    int len = to - from;
+    weu_string *out = weu_string_newSize(len);
+    memcpy(out->text, s->text + from, len);
+    weu_string_removeFromTo(s, from, to);
+    return out;
+}
+
+weu_stringNA weu_string_fromToNA(const weu_string *s, uint32_t from, uint32_t to) {
     if (s == NULL) return (weu_stringNA){.length = 0, .text = ""};
     from = from > 0 ? from : 0;
     to = to > from ? (to < s->length ? to : s->length) : from;
@@ -301,18 +385,7 @@ weu_stringNA weu_string_fromToNA(const weu_string *s, int from, int to) {
     out.text[out.length] = '\0';
     return out;
 }
-
-weu_string *weu_string_cutFromTo(weu_string *s, int from, int to) {
-    if (s == NULL) return NULL;
-    from = from > 0 ? from : 0;
-    to = to > from ? (to < s->length ? to : s->length) : from;
-    int len = to - from;
-    weu_string *out = weu_string_newSize(len);
-    memcpy(out->text, s->text + from, len);
-    weu_string_removeFromTo(s, from, to);
-    return out;
-}
-weu_stringNA weu_string_cutFromToNA(weu_string *s, int from, int to) {
+weu_stringNA weu_string_cutFromToNA(weu_string *s, uint32_t from, uint32_t to) {
     if (s == NULL) return (weu_stringNA){.length = 0, .text = ""};
     from = from > 0 ? from : 0;
     to = to > from ? (to < s->length ? to : s->length) : from;
@@ -324,7 +397,28 @@ weu_stringNA weu_string_cutFromToNA(weu_string *s, int from, int to) {
     return out;
 }
 
-void weu_string_removeFromTo(weu_string *s, int from, int to) {
+weu_string *weu_string_textFromTo(const char *text, uint32_t from, uint32_t to) {
+    if (text == NULL) return NULL;
+    if (from > to) { uint32_t temp; SWAPVAR(from, to, temp); }
+    uint32_t textLen = strlen(text);
+    to = to > textLen ? textLen : to;
+    weu_string *out = weu_string_newSize(to - from);
+    memcpy(out->text, text + from, out->length);
+    return out;
+}
+weu_stringNA weu_stringNA_textFromTo(const char *text, uint32_t from, uint32_t to) {
+    if (text == NULL) return (weu_stringNA){0};
+    if (from > to) { uint32_t temp; SWAPVAR(from, to, temp); }
+    uint32_t textLen = strlen(text);
+    to = to > textLen ? textLen : to;
+    weu_stringNA out = {0};
+    out.length = to - from + 1;
+    memcpy(&out.text[0], text + from, to - from);
+    out.text[out.length] = '\0';
+    return out; 
+}
+
+void weu_string_removeFromTo(weu_string *s, uint32_t from, uint32_t to) {
     if (s == NULL) return;
     from = from > 0 ? from : 0;
     to = to > from ? (to < s->length ? to : s->length) : from;
@@ -332,58 +426,58 @@ void weu_string_removeFromTo(weu_string *s, int from, int to) {
     s->length = s->length - to - from;
     s->text[s->length] = '\0';
 }
-void weu_string_overwriteFromTo(weu_string *s, int from, int to, const char *text) {
+void weu_string_overwriteFromTo(weu_string *s, uint32_t from, uint32_t to, const char *text) {
     if (s == NULL) return;
     from = from > 0 ? from : 0;
     to = to > from ? (to < s->length ? to : s->length) : from;
-    int len = weu_string_textLength(text);
+    uint32_t len = weu_string_textLength(text);
     len = to - from < len ? to - from : len;
     memcpy(s->text + from, text, len);
 }
 
-bool weu_string_containsText(weu_string *s, const char *text) {
+bool weu_string_containsText(const weu_string *s, const char *text) {
     if (s == NULL || text == NULL) return false;
-    int textLen = weu_string_textLength(text);
     bool contains = false;
-    int pos = s->charPtrPos;
+    uint32_t textLen = weu_string_textLength(text);
+    uint32_t pos = s->charPtrPos;
     for (; pos < s->length; pos++)
     {
         if ( s->text[pos] == text[0] ) {
-            int i = 1;
+            uint32_t i = 1;
             for (; i < textLen; i++)
             {
                 if (s->text[pos + i] != text[i]) {
                     pos += i;
-                    i = -1;
+                    i = INVALID;
                     break;
                 }
             }
-            if (i != -1) { 
+            if (i != INVALID) { 
                 contains = true;
                 break;
             };
         }
     }
-    s->charPtrPos = pos;
+    ((weu_string*)s)->charPtrPos = pos;
     return contains;
 }
-bool weu_stringNA_containsText(weu_stringNA *s, const char *text) {
+bool weu_stringNA_containsText(const weu_stringNA *s, const char *text) {
     if (s == NULL || text == NULL) return false;
-    int textLen = weu_string_textLength(text);
     bool contains = false;
-    for (int i = 0; i < s->length; i++)
+    uint32_t textLen = weu_string_textLength(text);
+    for (uint32_t i = 0; i < s->length; i++)
     {
         if ( s->text[i] == text[0] ) {
-            int j = 1;
+            uint32_t j = 1;
             for (; j < textLen; j++)
             {
                 if (s->text[i + j] != text[j]) {
                     i += j;
-                    j = -1;
+                    j = INVALID;
                     break;
                 }
             }
-            if (j != -1) { 
+            if (j != INVALID) { 
                 contains = true;
                 break;
             };
@@ -394,30 +488,29 @@ bool weu_stringNA_containsText(weu_stringNA *s, const char *text) {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  STRING CHAR POINTER
 
-int weu_string_getPointerPos(weu_string *s) {
+uint32_t weu_string_getPointerPos(const weu_string *s) {
     if (s == NULL) return -1;
     return s->charPtrPos;
 }
-void weu_string_setPointerPos(weu_string *s, int pos) {
+void weu_string_setPointerPos(weu_string *s, uint32_t pos) {
     if (s == NULL) return;
-    pos = pos < 0 ? 0 : pos >= s->length ? s->length - 1 : pos;
+    pos = pos > s->length ? s->length : pos;
     s->charPtrPos = pos;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  FILL
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void weu_string_fill(weu_string *s, char fillChar, int from, int to) {
+void weu_string_fill(weu_string *s, char fillChar, uint32_t from, uint32_t to) {
     if (s == NULL) return;
-    to = to < 0 ? 0 : to;
-    from = from < 0 ? 0 : from > to ? to : from;
+    if (from > to) { uint32_t temp; SWAPVAR(from, to, temp); }
     if (to > s->length) {
         weu_string_resize(s, to, ' ');
     }
     memset(&s->text[from], fillChar, to - from);
 }
 
-weu_string *weu_string_filled(char fillChar, int len) {
+weu_string *weu_string_filled(char fillChar, uint32_t len) {
     weu_string *out = malloc(sizeof(weu_string));
     out->length = len + 1;
     out->text = (char*)malloc(len);
@@ -426,7 +519,7 @@ weu_string *weu_string_filled(char fillChar, int len) {
     out->charPtrPos = 0;
     return out;
 }
-weu_stringNA weu_stringNA_filled(char fillChar, int len) {
+weu_stringNA weu_stringNA_filled(char fillChar, uint32_t len) {
     weu_stringNA out;
     SETLENRANGE(len, 0, 511);
     out.length = len;
@@ -438,7 +531,7 @@ weu_stringNA weu_stringNA_filled(char fillChar, int len) {
 //  CONACATE
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void weu_string_concateString(weu_string *s, int count, ...) {
+void weu_string_concateString(weu_string *s, uint8_t count, ...) {
     if (s == NULL) return;
     va_list args;
     va_start(args, count);
@@ -452,7 +545,7 @@ void weu_string_concateString(weu_string *s, int count, ...) {
     }
     va_end(args);
 }
-void weu_string_concateStringNA(weu_string *s, int count, ...) {
+void weu_string_concateStringNA(weu_string *s, uint8_t count, ...) {
     if (s == NULL) return;
     va_list args;
     va_start(args, count);
@@ -465,7 +558,7 @@ void weu_string_concateStringNA(weu_string *s, int count, ...) {
     }
     va_end(args);
 }
-void weu_string_concateText(weu_string *s, int count, ...) {
+void weu_string_concateText(weu_string *s, uint8_t count, ...) {
     if (s == NULL) return;
     va_list args;
     va_start(args, count);
@@ -481,8 +574,8 @@ void weu_string_concateText(weu_string *s, int count, ...) {
     va_end(args);
 }
 
-weu_stringNA weu_stringNA_concatedString(int count, ...) {
-    weu_stringNA out = weu_stringNA_newText("");
+weu_stringNA weu_stringNA_concatedString(uint8_t count, ...) {
+    weu_stringNA out = weu_stringNA_new("");
     va_list args;
     va_start(args, count);
     for (int i = 0; i < count; i++)
@@ -502,8 +595,8 @@ weu_stringNA weu_stringNA_concatedString(int count, ...) {
     out.text[out.length] = '\0';
     return out;
 }
-weu_stringNA weu_stringNA_concatedStringNA(int count, ...) {
-    weu_stringNA out = weu_stringNA_newText("");
+weu_stringNA weu_stringNA_concatedStringNA(uint8_t count, ...) {
+    weu_stringNA out = weu_stringNA_new("");
     va_list args;
     va_start(args, count);
     for (int i = 0; i < count; i++)
@@ -522,8 +615,8 @@ weu_stringNA weu_stringNA_concatedStringNA(int count, ...) {
     out.text[out.length] = '\0';
     return out;
 }
-weu_stringNA weu_stringNA_concatedText(int count, ...) {
-    weu_stringNA out = weu_stringNA_newText("");
+weu_stringNA weu_stringNA_concatedText(uint8_t count, ...) {
+    weu_stringNA out = weu_stringNA_new("");
     va_list args;
     va_start(args, count);
     for (int i = 0; i < count; i++)
@@ -547,33 +640,33 @@ weu_stringNA weu_stringNA_concatedText(int count, ...) {
 //  LINE
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
-weu_string *weu_string_getLine(weu_string *s) {
+weu_string *weu_string_getLine(const weu_string *s) {
     if (s == NULL) return NULL;
-    int charPointer = s->charPtrPos;
+    uint32_t charPointer = s->charPtrPos;
     while (charPointer < s->length) {
         if (s->text[charPointer] == '\n' || s->text[charPointer] == '\0') break;
         ++charPointer;
     }
     weu_string *out = weu_string_fromTo(s, s->charPtrPos, charPointer);
-    s->charPtrPos = ++charPointer;
+    ((weu_string*)s)->charPtrPos = ++charPointer;
     return out;
 }
-weu_stringNA weu_string_getLineNA(weu_string *s) {
+weu_stringNA weu_string_getLineNA(const weu_string *s) {
     if (s == NULL) return (weu_stringNA){.length = 0, .text = ""};
-    int charPointer = s->charPtrPos;
+    uint32_t charPointer = s->charPtrPos;
     while (charPointer < s->length) {
         if (s->text[charPointer] == '\n' || s->text[charPointer] == '\0') break;
         ++charPointer;
     }
     weu_stringNA out = weu_string_fromToNA(s, s->charPtrPos, charPointer);
-    s->charPtrPos = ++charPointer;
+    ((weu_string*)s)->charPtrPos = ++charPointer;
     return out;
 }
 
 weu_string *weu_string_cutLine(weu_string *s) {
     if (s == NULL) return NULL;
-    int isNewLine = 0;
-    int charPointer = 0;
+    uint32_t isNewLine = 0;
+    uint32_t charPointer = 0;
     while (charPointer < s->length) {
         if (s->text[charPointer] == '\n') {
             isNewLine = 1;
@@ -588,8 +681,8 @@ weu_string *weu_string_cutLine(weu_string *s) {
 }
 weu_stringNA weu_string_cutLineNA(weu_string *s) {
     if (s == NULL) return (weu_stringNA){.length = 0, .text = ""};
-    int isNewLine = 0;
-    int charPointer = 0;
+    uint32_t isNewLine = 0;
+    uint32_t charPointer = 0;
     while (charPointer < s->length) {
         if (s->text[charPointer] == '\n') {
             isNewLine = 1;
@@ -609,8 +702,8 @@ weu_stringNA weu_string_cutLineNA(weu_string *s) {
 weu_list *weu_string_splitByChar(const weu_string *s, char c) {
     if (s == NULL) return NULL;
     weu_list *out = weu_list_new(0, weu_string_listFree);
-    int sbeg = 0;
-    for (int i = 0; i < s->length; i++) {
+    uint32_t sbeg = 0;
+    for (uint32_t i = 0; i < s->length; i++) {
         if (s->text[i] == c) {
             weu_list_push(out, weu_string_fromTo(s, sbeg, i));
             sbeg = i + 1;
@@ -624,11 +717,11 @@ weu_list *weu_string_splitByChar(const weu_string *s, char c) {
 weu_list *weu_string_splitByText(const weu_string *s, const char *text) {
     if (s == NULL || text == NULL) return NULL;
     weu_list *out = weu_list_new(0, weu_string_listFree);
-    int textLen = strlen(text);
-    int sbeg = 0;
-    for (int i = 0; i < s->length; i++) {
-        int match = 0;
-        for (int j = 0; j < textLen; j++) {
+    uint32_t textLen = strlen(text);
+    uint32_t sbeg = 0;
+    for (uint32_t i = 0; i < s->length; i++) {
+        uint32_t match = 0;
+        for (uint32_t j = 0; j < textLen; j++) {
             if (s->text[i + j] == text[j]) ++match;
             else {
                 i += j;
@@ -659,7 +752,7 @@ void weu_string_addIndent(weu_string *s, uint8_t count, uint8_t spaceCount) {
     memmove(&s->text[tabLen], &s->text[0], s->length);
     memset(&s->text[0], ' ', tabLen);   
 }
-weu_string *weu_string_addedIndent(weu_string *s, uint8_t count, uint8_t spaceCount) {
+weu_string *weu_string_addedIndent(const weu_string *s, uint8_t count, uint8_t spaceCount) {
     if (s == NULL) return NULL;
     uint32_t tabLen = count * spaceCount;
     uint32_t finalLength = s->length + tabLen;
@@ -671,7 +764,7 @@ weu_string *weu_string_addedIndent(weu_string *s, uint8_t count, uint8_t spaceCo
 
 void weu_string_removeIndent(weu_string *s) {
     if (s == NULL) return;
-    int offset = 0;
+    uint32_t offset = 0;
     while (s->text[offset] == ' ' && offset < s->length)
     {
         ++offset;    
@@ -681,9 +774,9 @@ void weu_string_removeIndent(weu_string *s) {
     s->length = s->length - offset;
     s->text[s->length] = '\0';
 }
-weu_string *weu_string_removedIndent(weu_string *s) {
+weu_string *weu_string_removedIndent(const weu_string *s) {
     if (s == NULL) return NULL;
-    int offset = 0;
+    uint32_t offset = 0;
     while (s->text[offset] == ' ' && offset < s->length)
     {
         ++offset;    
@@ -692,9 +785,9 @@ weu_string *weu_string_removedIndent(weu_string *s) {
     memcpy(out->text, &s->text[offset], out->length);
     return out;
 }
-weu_stringNA weu_string_removeIndentNA(weu_string *s) {
-    if (s == NULL) return weu_stringNA_newText("");
-    int offset = 0;
+weu_stringNA weu_string_removedIndentNA(const weu_string *s) {
+    if (s == NULL) return weu_stringNA_new("");
+    uint32_t offset = 0;
     while (s->text[offset] == ' ' && offset < s->length)
     {
         ++offset;    
@@ -703,8 +796,8 @@ weu_stringNA weu_string_removeIndentNA(weu_string *s) {
     memcpy(out.text, &s->text[offset], out.length);
     return out;
 }
-weu_stringNA weu_stringNA_removeIndent(weu_stringNA s) {
-    int offset = 0;
+weu_stringNA weu_stringNA_removeIndent(const weu_stringNA s) {
+    uint32_t offset = 0;
     while (s.text[offset] == ' ' && offset < s.length)
     {
         ++offset;    
@@ -712,6 +805,172 @@ weu_stringNA weu_stringNA_removeIndent(weu_stringNA s) {
     weu_stringNA out = weu_stringNA_newSize(s.length - offset);
     memcpy(out.text, &s.text[offset], out.length);
     return out;
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  EXPRESSION
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool weu_string_textMatchesExpression(const char *text, const char *expression, weu_list *varyingStringOut, weu_bitfield_32 *isMatching) {
+    if (text == NULL || expression == NULL) return false;
+    
+    uint32_t textLen    = strlen(text);
+    uint32_t exprLen    = strlen(expression);
+    bool match          = true;
+    
+    uint32_t strCount = 0;
+    weu_bitfield_32 bf = 0;
+    char c;
+
+    uint32_t chPtr = 0;
+    uint32_t exprPtr = 0;
+
+    while (chPtr < textLen)
+    {
+        c = text[chPtr];
+
+        if (expression[exprPtr] == '%') {
+            //  TEST SINGLE CHARACTER
+            if (expression[exprPtr + 1] == 'c') {
+                if (varyingStringOut != NULL) weu_list_push(varyingStringOut, weu_string_newChar(c));
+                ++exprPtr;
+                //  TEST CONDITIONS
+                if (expression[exprPtr + 1] == '[') {
+                    uint32_t ptrPos = ++exprPtr;
+                    while (expression[exprPtr] != ']' && exprPtr < exprLen)
+                    {
+                        ++exprPtr;
+                    }
+                    weu_stringNA condition  = weu_stringNA_textFromTo(expression, ptrPos, exprPtr);
+                    if (weu_string_charMatchesCondition(c, condition.text)) { 
+                        SET_BIT32(bf, strCount++);
+                    }
+                    else { match = false; ++strCount; }
+                }
+                else SET_BIT32(bf, strCount++);
+            }
+            //  TEST STRING
+            else if (expression[exprPtr + 1] == 's') {
+                uint32_t len = 0;
+                //  GET STRING LENGTH
+                c = text[chPtr + len];
+                while (c != END_CH && c != '\0') {
+                    ++len;
+                    c = text[chPtr + len];
+                }
+                weu_string *varyString = weu_string_textFromTo(text, chPtr, chPtr + len);
+                if (varyingStringOut != NULL) weu_list_push(varyingStringOut, varyString);
+                ++exprPtr;
+                //  TEST CONDITIONS
+                if (expression[exprPtr + 1] == '[') {
+                    exprPtr += 2;
+                    uint32_t ptrPos = exprPtr++;
+                    while (expression[exprPtr] != ']' && exprPtr < exprLen)
+                    {
+                        ++exprPtr;
+                    }
+
+                    weu_stringNA condition  = weu_stringNA_textFromTo(expression, ptrPos, exprPtr);
+                    if (weu_string_textMatchesCondition(varyString->text, condition.text))  {
+                        SET_BIT32(bf, strCount++);
+                    }
+                    else { match = false; ++strCount; }
+                }
+                else if (varyString->length == 0) { match = false; ++strCount; }
+                else SET_BIT32(bf, strCount++);
+                chPtr += len;
+
+                if (varyingStringOut == NULL) weu_string_free(&varyString);
+            }
+        }
+        else if (c != expression[exprPtr]) {
+            match = false;
+        }
+        ++chPtr;
+        ++exprPtr;
+    }
+    if (isMatching != NULL) *isMatching = bf;
+    return match;
+}
+bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
+    if (condition == NULL) return false;
+
+    uint32_t condLen = strlen(condition);
+    if (condLen == 0) return true;
+
+    bool testInclusion  = false;
+    bool inclusionValid = false;
+    bool testExclusion  = false;
+    bool exceptionInvalid = false;
+    uint32_t startPos = condition[0] == '[' ? 1 : 0;
+    printf("%c - ", c);
+    for (uint32_t cPtr = startPos; cPtr < condLen;) {
+
+        if (condition[cPtr] == ']' || condition[cPtr] == '\0') break;
+        if (condition[cPtr] == '!' && condition[cPtr + 2] == '-' && !exceptionInvalid) {
+            testExclusion = true;
+            uint8_t from    = condition[cPtr + 1];
+            uint8_t to      = condition[cPtr + 3];
+            if (from > to) {uint8_t temp; SWAPVAR(from, to, temp); }
+            printf ("test not in range %c to %c |", from, to);
+            if (c >= from && c <= to) {
+                exceptionInvalid = true;
+            }
+            cPtr += 4;
+        }
+        else if (condition[cPtr + 1] == '-' && !inclusionValid) {
+            testInclusion = true;
+            uint8_t from    = condition[cPtr];
+            uint8_t to      = condition[cPtr + 2];
+            if (from > to) {uint8_t temp; SWAPVAR(from, to, temp); }
+            printf ("test in range %c to %c |", from, to);
+            if (c >= from && c <= to) {
+                inclusionValid = true;
+            }
+            cPtr += 3;
+        }
+        else if (condition[cPtr] == '!' && condition[cPtr + 2] != '-' && !exceptionInvalid) {
+            testExclusion = true;
+            ++cPtr;
+            while (condition[cPtr] != '!' && condition[cPtr + 1] != '-' && condition[cPtr] != ']' && condition[cPtr] != '\0') {
+                printf (" is not %c |", condition[cPtr]);
+                if (c == condition[cPtr]) {
+                    exceptionInvalid = true;
+                    break;
+                }
+                ++cPtr;
+            }
+            ++cPtr;
+        }
+        else if (condition[cPtr - 1] != '-' && condition[cPtr + 1] != '-' && !inclusionValid) {
+            testInclusion = true;
+            while (condition[cPtr] != '!' && condition[cPtr + 1] != '-' && condition[cPtr] != ']' && condition[cPtr] != '\0') {
+                printf (" is %c |", condition[cPtr]);
+                if (c == condition[cPtr]) {
+                    inclusionValid = true;
+                    break;
+                }
+                ++cPtr;
+            }
+            ++cPtr;
+        }
+        else {
+            ++cPtr;
+        }
+    }
+    printf("\n");
+    if (testInclusion && !inclusionValid) printf("char %c - inclusion failed\n", c);
+    if (testExclusion && exceptionInvalid) printf("char %c - exclusion failed\n", c);
+    if ((testInclusion && !inclusionValid) || (testExclusion && exceptionInvalid)) return false;
+    else return true;
+}
+bool weu_string_textMatchesCondition(const char *text, const char *condition) {
+    if (text == NULL || condition == NULL) return false;
+    uint32_t textLen = strlen(text);
+    for (uint32_t i = 0; i < textLen; i++)
+    {
+        if (!weu_string_charMatchesCondition(text[i], condition)) return false;
+    }
+    return true;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  PARSE
@@ -764,27 +1023,27 @@ weu_string *weu_string_ullong(uint64_t val) {
 weu_stringNA weu_string_floatNA(float val) {
     char buffer[64];
     sprintf(buffer, "%f", val);
-    return weu_stringNA_newText(buffer);
+    return weu_stringNA_new(buffer);
 }
 weu_stringNA weu_string_intNA(int32_t val) {
     char buffer[64];
     sprintf(buffer, "%i", val);
-    return weu_stringNA_newText(buffer);
+    return weu_stringNA_new(buffer);
 }
 weu_stringNA weu_string_uintNA(uint32_t val) {
     char buffer[64];
     sprintf(buffer, "%u", val);
-    return weu_stringNA_newText(buffer);
+    return weu_stringNA_new(buffer);
 }
 weu_stringNA weu_string_llongNA(int64_t val) {
     char buffer[64];
     sprintf(buffer, "%ld", val);
-    return weu_stringNA_newText(buffer);
+    return weu_stringNA_new(buffer);
 }
 weu_stringNA weu_string_ullongNA(uint64_t val) {
     char buffer[64];
     sprintf(buffer, "%lu", val);
-    return weu_stringNA_newText(buffer);
+    return weu_stringNA_new(buffer);
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  DEBUG
