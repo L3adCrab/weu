@@ -117,6 +117,7 @@ WEUDEF void weu_string_setPointerPos(weu_string *s, uint32_t pos);
 //  FILL
 
 WEUDEF void weu_string_fill(weu_string *s, char fillChar, uint32_t from, uint32_t to);
+WEUDEF weu_stringNA weu_stringNA_fill(weu_stringNA s, char fillChar, uint32_t from, uint32_t to);
 
 WEUDEF weu_string *weu_string_filled(char fillChar, uint32_t len);
 WEUDEF weu_stringNA weu_stringNA_filled(char fillChar, uint32_t len);
@@ -176,7 +177,6 @@ if char is not any of - [!abcd]
 can be mixed - [a-z!A-Z0123!567]
 test0string - true
 Test7String - false
-tests for not take priotity
 
 #example
 string - "Test string\3 example - 0"
@@ -508,6 +508,14 @@ void weu_string_fill(weu_string *s, char fillChar, uint32_t from, uint32_t to) {
         weu_string_resize(s, to, ' ');
     }
     memset(&s->text[from], fillChar, to - from);
+}
+weu_stringNA weu_stringNA_fill(weu_stringNA s, char fillChar, uint32_t from, uint32_t to) {
+    if (from > to) { uint32_t temp; SWAPVAR(from, to, temp); }
+    weu_stringNA out = s;
+    memset(&out.text[from], fillChar, to - from);
+    if (to > out.length) out.length = to + 1;
+    out.text[out.length] = '\0';
+    return out; 
 }
 
 weu_string *weu_string_filled(char fillChar, uint32_t len) {
@@ -901,9 +909,7 @@ bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
     bool inclusionValid = false;
     bool testExclusion  = false;
     bool exceptionInvalid = false;
-    uint32_t startPos = condition[0] == '[' ? 1 : 0;
-    printf("%c - ", c);
-    for (uint32_t cPtr = startPos; cPtr < condLen;) {
+    for (uint32_t cPtr = condition[0] == '[' ? 1 : 0; cPtr < condLen;) {
 
         if (condition[cPtr] == ']' || condition[cPtr] == '\0') break;
         if (condition[cPtr] == '!' && condition[cPtr + 2] == '-' && !exceptionInvalid) {
@@ -911,7 +917,6 @@ bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
             uint8_t from    = condition[cPtr + 1];
             uint8_t to      = condition[cPtr + 3];
             if (from > to) {uint8_t temp; SWAPVAR(from, to, temp); }
-            printf ("test not in range %c to %c |", from, to);
             if (c >= from && c <= to) {
                 exceptionInvalid = true;
             }
@@ -922,7 +927,6 @@ bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
             uint8_t from    = condition[cPtr];
             uint8_t to      = condition[cPtr + 2];
             if (from > to) {uint8_t temp; SWAPVAR(from, to, temp); }
-            printf ("test in range %c to %c |", from, to);
             if (c >= from && c <= to) {
                 inclusionValid = true;
             }
@@ -932,7 +936,6 @@ bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
             testExclusion = true;
             ++cPtr;
             while (condition[cPtr] != '!' && condition[cPtr + 1] != '-' && condition[cPtr] != ']' && condition[cPtr] != '\0') {
-                printf (" is not %c |", condition[cPtr]);
                 if (c == condition[cPtr]) {
                     exceptionInvalid = true;
                     break;
@@ -944,7 +947,6 @@ bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
         else if (condition[cPtr - 1] != '-' && condition[cPtr + 1] != '-' && !inclusionValid) {
             testInclusion = true;
             while (condition[cPtr] != '!' && condition[cPtr + 1] != '-' && condition[cPtr] != ']' && condition[cPtr] != '\0') {
-                printf (" is %c |", condition[cPtr]);
                 if (c == condition[cPtr]) {
                     inclusionValid = true;
                     break;
@@ -957,9 +959,6 @@ bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
             ++cPtr;
         }
     }
-    printf("\n");
-    if (testInclusion && !inclusionValid) printf("char %c - inclusion failed\n", c);
-    if (testExclusion && exceptionInvalid) printf("char %c - exclusion failed\n", c);
     if ((testInclusion && !inclusionValid) || (testExclusion && exceptionInvalid)) return false;
     else return true;
 }
