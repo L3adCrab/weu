@@ -837,57 +837,88 @@ bool weu_string_textMatchesExpression(const char *text, const char *expression, 
         c = text[chPtr];
 
         if (expression[exprPtr] == '%') {
+            //  READ COUNT
+            uint32_t readCount = 1;
+            if (expression[exprPtr + 1] >= '0' && expression[exprPtr + 1] <= '9') {
+                readCount = expression[exprPtr + 1] - '0';
+                ++exprPtr;
+            }
+            readCount = (readCount + chPtr) > textLen ? textLen - chPtr : readCount;
             //  TEST SINGLE CHARACTER
             if (expression[exprPtr + 1] == 'c') {
-                if (varyingStringOut != NULL) weu_list_push(varyingStringOut, weu_string_newChar(c));
                 ++exprPtr;
                 //  TEST CONDITIONS
+                weu_stringNA condition = weu_stringNA_new("");
+                bool hasCondition = false;
                 if (expression[exprPtr + 1] == '[') {
                     uint32_t ptrPos = ++exprPtr;
                     while (expression[exprPtr] != ']' && exprPtr < exprLen)
                     {
                         ++exprPtr;
                     }
-                    weu_stringNA condition  = weu_stringNA_textFromTo(expression, ptrPos, exprPtr);
-                    if (weu_string_charMatchesCondition(c, condition.text)) { 
-                        SET_BIT32(bf, strCount++);
-                    }
-                    else { match = false; ++strCount; }
+                    condition  = weu_stringNA_textFromTo(expression, ptrPos, exprPtr);
+                    hasCondition = true;
                 }
                 else SET_BIT32(bf, strCount++);
+
+                for (uint32_t i = 0; i < readCount; i++) {
+                    c = text[chPtr];
+                    if (varyingStringOut != NULL) weu_list_push(varyingStringOut, weu_string_newChar(c));
+                    if (hasCondition) {
+                        if (weu_string_charMatchesCondition(c, condition.text)) { 
+                            SET_BIT32(bf, strCount++);
+                        }
+                        else { match = false; ++strCount; }
+                    }
+                    if (i != readCount - 1) {
+                        ++chPtr;
+                    }
+                }
             }
             //  TEST STRING
             else if (expression[exprPtr + 1] == 's') {
-                uint32_t len = 0;
-                //  GET STRING LENGTH
-                c = text[chPtr + len];
-                while (c != END_CH && c != '\0') {
-                    ++len;
-                    c = text[chPtr + len];
+                //  STRING END CHAR
+                uint8_t endChar = '\0';
+                if (expression[exprPtr + 2] == '{' && expression[exprPtr + 4] == '}') {
+                    endChar = expression[exprPtr + 3];
+                    exprPtr += 3;
                 }
-                weu_string *varyString = weu_string_textFromTo(text, chPtr, chPtr + len);
-                if (varyingStringOut != NULL) weu_list_push(varyingStringOut, varyString);
                 ++exprPtr;
                 //  TEST CONDITIONS
+                weu_stringNA condition = weu_stringNA_new("");
+                bool hasCondition = false;
                 if (expression[exprPtr + 1] == '[') {
-                    exprPtr += 2;
-                    uint32_t ptrPos = exprPtr++;
+                    uint32_t ptrPos = ++exprPtr;
                     while (expression[exprPtr] != ']' && exprPtr < exprLen)
                     {
                         ++exprPtr;
                     }
-
-                    weu_stringNA condition  = weu_stringNA_textFromTo(expression, ptrPos, exprPtr);
-                    if (weu_string_textMatchesCondition(varyString->text, condition.text))  {
-                        SET_BIT32(bf, strCount++);
-                    }
-                    else { match = false; ++strCount; }
+                    condition  = weu_stringNA_textFromTo(expression, ptrPos, exprPtr);
+                    hasCondition = true;
                 }
-                else if (varyString->length == 0) { match = false; ++strCount; }
                 else SET_BIT32(bf, strCount++);
-                chPtr += len;
+                ++exprPtr;
 
-                if (varyingStringOut == NULL) weu_string_free(&varyString);
+                for (uint32_t i = 0; i < readCount; i++) {
+                    uint32_t len = 0;
+                    c = text[chPtr];
+                    while (c != END_CH && c != '\0' && c != endChar) {
+                        ++len;
+                        c = text[chPtr + len];
+                    }
+                    weu_string *varyString = weu_string_textFromTo(text, chPtr, chPtr + len);
+                    chPtr += len + 1;
+
+                    if (varyingStringOut != NULL) weu_list_push(varyingStringOut, varyString);
+                    if (hasCondition) {
+                        if (weu_string_textMatchesCondition(varyString->text, condition.text))  {
+                            SET_BIT32(bf, strCount++);
+                        }
+                        else { match = false; ++strCount; }
+                    }
+
+                    if (varyingStringOut == NULL) weu_string_free(&varyString);
+                }
             }
         }
         else if (c != expression[exprPtr]) {
@@ -897,6 +928,8 @@ bool weu_string_textMatchesExpression(const char *text, const char *expression, 
         ++exprPtr;
     }
     if (isMatching != NULL) *isMatching = bf;
+    printf("%i %i || %i %i\n", chPtr, textLen, exprPtr, exprLen);
+    if (chPtr != textLen && exprPtr != exprLen) match = false;
     return match;
 }
 bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
@@ -944,7 +977,7 @@ bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
             }
             ++cPtr;
         }
-        else if (condition[cPtr - 1] != '-' && condition[cPtr + 1] != '-' && !inclusionValid) {
+        else if (cPtr > 0 && condition[cPtr - 1] != '-' && condition[cPtr + 1] != '-' && !inclusionValid) {
             testInclusion = true;
             while (condition[cPtr] != '!' && condition[cPtr + 1] != '-' && condition[cPtr] != ']' && condition[cPtr] != '\0') {
                 if (c == condition[cPtr]) {
