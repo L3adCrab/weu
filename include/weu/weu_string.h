@@ -163,9 +163,19 @@ isMatching - if passed reference to bitfield_32 sets successful varying string t
 #expression features
 %c - test single character
 %s - test string, reads testable string until \3 or STR_END/SE character, or \0
-Returns as fail if string length is 0
+Returns as fail if string length is 
 
-test conditions shiuld be in sqare brackets after char of string identifiers
+#repeat tests
+To test multiple characters or strings with same conditions 
+can specify single digit from 0 to 9 after percent sign and before identifier.
+#example - %2c or %7s
+
+#string end char
+For testing string, string end character can be specified
+as single character in brackets. 
+#example - %s{;}[]
+
+test conditions should be in sqare brackets after char of string identifiers
 example - %c[condition]
 
 #conditions
@@ -178,11 +188,18 @@ can be mixed - [a-z!A-Z0123!567]
 test0string - true
 Test7String - false
 
-#example
-string - "Test string\3 example - 0"
-expression - "Test %s[a-z] example - %c[!0-9]"
-return false
-varying out - {string, 0} */
+#example success
+string      - "test string A1 - 1234 0987 AbF9d A"
+expression  - "test string %c[A-Z]%c[0-9] - %4s{ }[a-zA-Z0-9!a]"
+varying out - A, 1, 1234, 0987, abF9d, a
+isMatching  - 1, 1, 1,    1,    1,     1
+
+#example fail
+string      - "test string Ab - 1234 0987 abF9d a"
+expression  - "test string %c[A-Z]%c[0-9] - %4s{ }[a-zA-Z0-9!a]"
+varying out - A, b, 1234, 0987, abF9d, a
+isMatching  - 1, 0, 1,    1,    0,     0
+*/
 WEUDEF bool weu_string_textMatchesExpression(const char *text, const char *expression, weu_list *varyingStringOut, weu_bitfield_32 *isMatching);
 WEUDEF bool weu_string_charMatchesCondition(const uint8_t c, const char *condition);
 WEUDEF bool weu_string_textMatchesCondition(const char *text, const char *condition);
