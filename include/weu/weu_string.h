@@ -163,9 +163,19 @@ isMatching - if passed reference to bitfield_32 sets successful varying string t
 #expression features
 %c - test single character
 %s - test string, reads testable string until \3 or STR_END/SE character, or \0
-Returns as fail if string length is 0
+Returns as fail if string length is 
 
-test conditions shiuld be in sqare brackets after char of string identifiers
+#repeat tests
+To test multiple characters or strings with same conditions 
+can specify single digit from 0 to 9 after percent sign and before identifier.
+#example - %2c or %7s
+
+#string end char
+For testing string, string end character can be specified
+as single character in brackets. 
+#example - %s{;}[]
+
+test conditions should be in sqare brackets after char of string identifiers
 example - %c[condition]
 
 #conditions
@@ -178,11 +188,18 @@ can be mixed - [a-z!A-Z0123!567]
 test0string - true
 Test7String - false
 
-#example
-string - "Test string\3 example - 0"
-expression - "Test %s[a-z] example - %c[!0-9]"
-return false
-varying out - {string, 0} */
+#example success
+string      - "test string A1 - 1234 0987 AbF9d A"
+expression  - "test string %c[A-Z]%c[0-9] - %4s{ }[a-zA-Z0-9!a]"
+varying out - A, 1, 1234, 0987, abF9d, a
+isMatching  - 1, 1, 1,    1,    1,     1
+
+#example fail
+string      - "test string Ab - 1234 0987 abF9d a"
+expression  - "test string %c[A-Z]%c[0-9] - %4s{ }[a-zA-Z0-9!a]"
+varying out - A, b, 1234, 0987, abF9d, a
+isMatching  - 1, 0, 1,    1,    0,     0
+*/
 WEUDEF bool weu_string_textMatchesExpression(const char *text, const char *expression, weu_list *varyingStringOut, weu_bitfield_32 *isMatching);
 WEUDEF bool weu_string_charMatchesCondition(const uint8_t c, const char *condition);
 WEUDEF bool weu_string_textMatchesCondition(const char *text, const char *condition);
@@ -820,83 +837,102 @@ weu_stringNA weu_stringNA_removeIndent(const weu_stringNA s) {
 
 bool weu_string_textMatchesExpression(const char *text, const char *expression, weu_list *varyingStringOut, weu_bitfield_32 *isMatching) {
     if (text == NULL || expression == NULL) return false;
-    
+
     uint32_t textLen    = strlen(text);
     uint32_t exprLen    = strlen(expression);
     bool match          = true;
-    
-    uint32_t strCount = 0;
-    weu_bitfield_32 bf = 0;
-    char c;
 
-    uint32_t chPtr = 0;
-    uint32_t exprPtr = 0;
+    uint32_t txtPos = 0;
+    uint32_t expPos = 0;
 
-    while (chPtr < textLen)
+    uint32_t varyCount  = 0;
+    weu_bitfield_32 bf  = 0;
+
+    while (txtPos < textLen)
     {
-        c = text[chPtr];
-
-        if (expression[exprPtr] == '%') {
-            //  TEST SINGLE CHARACTER
-            if (expression[exprPtr + 1] == 'c') {
-                if (varyingStringOut != NULL) weu_list_push(varyingStringOut, weu_string_newChar(c));
-                ++exprPtr;
-                //  TEST CONDITIONS
-                if (expression[exprPtr + 1] == '[') {
-                    uint32_t ptrPos = ++exprPtr;
-                    while (expression[exprPtr] != ']' && exprPtr < exprLen)
-                    {
-                        ++exprPtr;
-                    }
-                    weu_stringNA condition  = weu_stringNA_textFromTo(expression, ptrPos, exprPtr);
-                    if (weu_string_charMatchesCondition(c, condition.text)) { 
-                        SET_BIT32(bf, strCount++);
-                    }
-                    else { match = false; ++strCount; }
-                }
-                else SET_BIT32(bf, strCount++);
+        if (expPos >= exprLen) { return false; }
+        if (expression[expPos] == '%') {
+            ++expPos;
+            //  READ COUNT
+            uint32_t readCount = 1;
+            if (expression[expPos] >= '0' && expression[expPos] <= '9') {
+                readCount = expression[expPos] - '0';
+                ++expPos;
             }
-            //  TEST STRING
-            else if (expression[exprPtr + 1] == 's') {
-                uint32_t len = 0;
-                //  GET STRING LENGTH
-                c = text[chPtr + len];
-                while (c != END_CH && c != '\0') {
-                    ++len;
-                    c = text[chPtr + len];
+            //  TEST CONTEXT
+            bool charTest = false;
+            if      (expression[expPos] == 'c') charTest = true;
+            else if (expression[expPos] == 's') charTest = false;
+            else {
+                if (varyingStringOut) weu_list_push(varyingStringOut, weu_string_newChar(text[txtPos])); 
+                match = false;
+                break; 
+            }
+            ++expPos;
+            //  STRING READ END CONDITION
+            uint8_t strEnd = '\0';
+            if (expression[expPos] == '{' && expression[expPos + 2] == '}') {
+                strEnd = expression[expPos + 1];
+                expPos += 3;
+            }
+            //  CONDITION
+            weu_stringNA condition = weu_stringNA_new("");
+            if (expression[expPos] == '[') {
+                uint32_t startPos = expPos++;
+                while (expression[expPos] != ']' && expression[expPos] != '\0') {
+                    ++expPos;
                 }
-                weu_string *varyString = weu_string_textFromTo(text, chPtr, chPtr + len);
-                if (varyingStringOut != NULL) weu_list_push(varyingStringOut, varyString);
-                ++exprPtr;
-                //  TEST CONDITIONS
-                if (expression[exprPtr + 1] == '[') {
-                    exprPtr += 2;
-                    uint32_t ptrPos = exprPtr++;
-                    while (expression[exprPtr] != ']' && exprPtr < exprLen)
-                    {
-                        ++exprPtr;
+                condition = weu_stringNA_textFromTo(expression, startPos, ++expPos);
+            }
+            //  TEST
+            for (uint32_t i = 0; i < readCount; i++)
+            {
+                if (txtPos >= textLen) {
+                    match = false;
+                    weu_list_push(varyingStringOut, weu_string_new(""));
+                    ++varyCount;
+                    continue;
+                }
+
+                if (charTest) {
+                    if (varyingStringOut) weu_list_push(varyingStringOut, weu_string_newChar(text[txtPos]));
+                    if (!weu_string_charMatchesCondition(text[txtPos], condition.text)) {
+                        match = false;
+                        ++varyCount;
+                    }
+                    else SET_BIT32(bf, varyCount++);
+                }
+                else {
+                    // STRING LENGTH
+                    uint32_t startPos = txtPos++;
+                    while (text[txtPos] != '\0' && text[txtPos] != strEnd && txtPos < textLen) {
+                        ++txtPos;
                     }
 
-                    weu_stringNA condition  = weu_stringNA_textFromTo(expression, ptrPos, exprPtr);
-                    if (weu_string_textMatchesCondition(varyString->text, condition.text))  {
-                        SET_BIT32(bf, strCount++);
+                    weu_stringNA str = weu_stringNA_textFromTo(text, startPos, txtPos);
+                    
+                    if (varyingStringOut) weu_list_push(varyingStringOut, weu_string_new(str.text));
+                    if (!weu_string_textMatchesCondition(str.text, condition.text)) {
+                        match = false;
+                        ++varyCount;
                     }
-                    else { match = false; ++strCount; }
+                    else SET_BIT32(bf, varyCount++);
                 }
-                else if (varyString->length == 0) { match = false; ++strCount; }
-                else SET_BIT32(bf, strCount++);
-                chPtr += len;
-
-                if (varyingStringOut == NULL) weu_string_free(&varyString);
+                if (txtPos < textLen) ++txtPos;
             }
         }
-        else if (c != expression[exprPtr]) {
+        else if (text[txtPos] != expression[expPos]) {
             match = false;
+            ++txtPos;
+            ++expPos;
         }
-        ++chPtr;
-        ++exprPtr;
+        else {
+            ++txtPos;
+            ++expPos;
+        }
     }
-    if (isMatching != NULL) *isMatching = bf;
+    if (isMatching) *isMatching = bf;
+    if (txtPos == textLen && expPos < exprLen) return false;
     return match;
 }
 bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
@@ -910,7 +946,7 @@ bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
     bool testExclusion  = false;
     bool exceptionInvalid = false;
     for (uint32_t cPtr = condition[0] == '[' ? 1 : 0; cPtr < condLen;) {
-
+        //  TEST IS CHAR NOT IN RANGE
         if (condition[cPtr] == ']' || condition[cPtr] == '\0') break;
         if (condition[cPtr] == '!' && condition[cPtr + 2] == '-' && !exceptionInvalid) {
             testExclusion = true;
@@ -922,6 +958,7 @@ bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
             }
             cPtr += 4;
         }
+        //  TEST IS CHAR IN RANGE
         else if (condition[cPtr + 1] == '-' && !inclusionValid) {
             testInclusion = true;
             uint8_t from    = condition[cPtr];
@@ -932,6 +969,7 @@ bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
             }
             cPtr += 3;
         }
+        //  TEST IS NOT CHAR
         else if (condition[cPtr] == '!' && condition[cPtr + 2] != '-' && !exceptionInvalid) {
             testExclusion = true;
             ++cPtr;
@@ -944,7 +982,8 @@ bool weu_string_charMatchesCondition(const uint8_t c, const char *condition) {
             }
             ++cPtr;
         }
-        else if (condition[cPtr - 1] != '-' && condition[cPtr + 1] != '-' && !inclusionValid) {
+        //  TEST IS CHAR
+        else if (cPtr > 0 && condition[cPtr - 1] != '-' && condition[cPtr + 1] != '-' && !inclusionValid) {
             testInclusion = true;
             while (condition[cPtr] != '!' && condition[cPtr + 1] != '-' && condition[cPtr] != ']' && condition[cPtr] != '\0') {
                 if (c == condition[cPtr]) {
