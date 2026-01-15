@@ -62,9 +62,9 @@ WEUDEF weu_string *weu_string_new(const char *text);
 WEUDEF weu_string *weu_string_newChar(char c);
 WEUDEF weu_string *weu_string_copy(const weu_string *str);
 
-//  Return copy of string with same memory of text
-//  Should not be edited or passed in funtions that eddit string(non const)
-//  Printf will still print until original strings termiantor
+//  Return copy of string with same memory of text.
+//  Should not be edited or passed in funtions that edit string(non const).
+//  Printf will still print until original strings terminator.
 WEUDEF weu_string weu_string_slice(const weu_string *s, uint32_t from, uint32_t to);
 
 WEUDEF void weu_string_resize(weu_string *s, uint32_t length, char emptyFill);
@@ -168,6 +168,7 @@ Returns as fail if string length is
 #repeat tests
 To test multiple characters or strings with same conditions 
 can specify single digit from 0 to 9 after percent sign and before identifier.
+0 and 1 set count to 1.
 #example - %2c or %7s
 
 #string end char
@@ -189,13 +190,13 @@ test0string - true
 Test7String - false
 
 #example success
-string      - "test string A1 - 1234 0987 AbF9d A"
+test string - "test string A1 - 1234 0987 AbF9d A"
 expression  - "test string %c[A-Z]%c[0-9] - %4s{ }[a-zA-Z0-9!a]"
 varying out - A, 1, 1234, 0987, abF9d, a
 isMatching  - 1, 1, 1,    1,    1,     1
 
 #example fail
-string      - "test string Ab - 1234 0987 abF9d a"
+test string - "test string Ab - 1234 0987 abF9d a"
 expression  - "test string %c[A-Z]%c[0-9] - %4s{ }[a-zA-Z0-9!a]"
 varying out - A, b, 1234, 0987, abF9d, a
 isMatching  - 1, 0, 1,    1,    0,     0
@@ -851,12 +852,24 @@ bool weu_string_textMatchesExpression(const char *text, const char *expression, 
     while (txtPos < textLen)
     {
         if (expPos >= exprLen) { return false; }
+        if (text[txtPos] == expression[expPos]) {
+            ++txtPos;
+            ++expPos;
+            continue;
+        }
+        if (expression[expPos] != '%') {
+            match = false;
+            ++txtPos;
+            ++expPos;
+            continue;
+        }
         if (expression[expPos] == '%') {
             ++expPos;
             //  READ COUNT
             uint32_t readCount = 1;
             if (expression[expPos] >= '0' && expression[expPos] <= '9') {
                 readCount = expression[expPos] - '0';
+                if (readCount == 0) readCount = 1;
                 ++expPos;
             }
             //  TEST CONTEXT
@@ -898,9 +911,9 @@ bool weu_string_textMatchesExpression(const char *text, const char *expression, 
                     if (varyingStringOut) weu_list_push(varyingStringOut, weu_string_newChar(text[txtPos]));
                     if (!weu_string_charMatchesCondition(text[txtPos], condition.text)) {
                         match = false;
-                        ++varyCount;
                     }
-                    else SET_BIT32(bf, varyCount++);
+                    else SET_BIT32(bf, varyCount);
+                    ++varyCount;
                 }
                 else {
                     // STRING LENGTH
@@ -910,25 +923,18 @@ bool weu_string_textMatchesExpression(const char *text, const char *expression, 
                     }
 
                     weu_stringNA str = weu_stringNA_textFromTo(text, startPos, txtPos);
+                    //  Skip over string end char
+                    if (text[txtPos] == strEnd) ++expPos;
                     
                     if (varyingStringOut) weu_list_push(varyingStringOut, weu_string_new(str.text));
                     if (!weu_string_textMatchesCondition(str.text, condition.text)) {
                         match = false;
-                        ++varyCount;
                     }
-                    else SET_BIT32(bf, varyCount++);
+                    else SET_BIT32(bf, varyCount);
+                    ++varyCount;
                 }
                 if (txtPos < textLen) ++txtPos;
             }
-        }
-        else if (text[txtPos] != expression[expPos]) {
-            match = false;
-            ++txtPos;
-            ++expPos;
-        }
-        else {
-            ++txtPos;
-            ++expPos;
         }
     }
     if (isMatching) *isMatching = bf;
@@ -1006,7 +1012,7 @@ bool weu_string_textMatchesCondition(const char *text, const char *condition) {
     uint32_t textLen = strlen(text);
     for (uint32_t i = 0; i < textLen; i++)
     {
-        if (!weu_string_charMatchesCondition(text[i], condition)) return false;
+        if (!weu_string_charMatchesCondition(text[i], condition)) { return false; }
     }
     return true;
 }
