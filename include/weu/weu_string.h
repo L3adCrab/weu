@@ -173,7 +173,8 @@ can specify single digit from 0 to 9 after percent sign and before identifier.
 
 #string end char
 For testing string, string end character can be specified
-as single character in brackets. 
+as single character in brackets.
+Up to five characters can be specified, rest will be ignored.
 #example - %s{;}[]
 
 test conditions should be in sqare brackets after char of string identifiers
@@ -883,11 +884,21 @@ bool weu_string_textMatchesExpression(const char *text, const char *expression, 
             }
             ++expPos;
             //  STRING READ END CONDITION
-            uint8_t strEnd = '\0';
-            if (expression[expPos] == '{' && expression[expPos + 2] == '}') {
-                strEnd = expression[expPos + 1];
-                expPos += 3;
+            // uint8_t strEnd = '\0';
+            uint8_t strEnd[7] = {END_CH, 0};
+            uint8_t endCount = 0;
+            if (expression[expPos] == '{') {
+                ++expPos;
+                while (expression[expPos] != '}' && expression[expPos] != '\0') {
+                    if (endCount < 5) {
+                        strEnd[endCount + 2] = expression[expPos];
+                        ++endCount;
+                    }
+                    ++expPos;
+                }
+                ++expPos;
             }
+            endCount += 2;
             //  CONDITION
             weu_stringNA condition = weu_stringNA_new("");
             if (expression[expPos] == '[') {
@@ -918,13 +929,20 @@ bool weu_string_textMatchesExpression(const char *text, const char *expression, 
                 else {
                     // STRING LENGTH
                     uint32_t startPos = txtPos++;
-                    while (text[txtPos] != '\0' && text[txtPos] != strEnd && txtPos < textLen) {
+                    bool hitEndCh = false;
+                    while (!hitEndCh) {
+                        if (txtPos >= textLen) { break; }
+                        for (uint32_t i = 0; i < endCount; i++)
+                        {
+                            if (text[txtPos] == strEnd[i]) { hitEndCh = true; break; }
+                        }
+                        if (hitEndCh) break;
                         ++txtPos;
                     }
 
                     weu_stringNA str = weu_stringNA_textFromTo(text, startPos, txtPos);
                     //  Skip over string end char
-                    if (text[txtPos] == strEnd) ++expPos;
+                    if (hitEndCh) ++expPos;
                     
                     if (varyingStringOut) weu_list_push(varyingStringOut, weu_string_new(str.text));
                     if (!weu_string_textMatchesCondition(str.text, condition.text)) {
