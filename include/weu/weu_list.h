@@ -43,6 +43,7 @@ WEUDEF void weu_list_reallocateToLength(weu_list *h);
 //  DATA FREE
 
 WEUDEF void weu_list_freeData(weu_list *h, uint32_t index);
+WEUDEF void weu_list_freeAllData(weu_list *h);
 WEUDEF void weu_list_setDataFreeFun(weu_list *h, datafreefun freeFun);
 WEUDEF void weu_stdFree(void **data);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -109,9 +110,11 @@ void weu_list_resize(weu_list *h, uint32_t newLength, bool freeOOB) {
     uint32_t oldLen = h->length;
     int lenDif = newLength - oldLen;
     if (lenDif > 0) {
-        h->allocatedLength = newLength;
         h->length = newLength;
-        h->data = realloc(h->data, sizeof(void*) * newLength);
+        if (newLength > h->allocatedLength) {
+            h->allocatedLength = newLength;
+            h->data = realloc(h->data, sizeof(void*) * newLength);
+        }
     }
     else {
         h->length = newLength;
@@ -135,6 +138,13 @@ void weu_list_freeData(weu_list *h, uint32_t index) {
     if (h == NULL || index >= h->length) return;
     if (h->d != NULL) h->d(&h->data[index]);
     h->data[index] = NULL;
+}
+void weu_list_freeAllData(weu_list *h) {
+    if (h == NULL) return;
+    for (uint32_t i = 0; i < h->length; i++) {   
+        weu_list_freeData(h, i);
+    }
+    h->length = 0;
 }
 void weu_list_setDataFreeFun(weu_list *h, datafreefun freeFun) {
     if (h == NULL) return;
