@@ -29,14 +29,6 @@
     #endif
 #endif
 
-#ifndef TEXT_CTRL
-#define TEXT_CTRL
-#define END_CH 3
-#define EC END_CH
-#define STR_END "\3"
-#define SE STR_END
-#endif
-
 #include "weu_datatypes.h"
 #include "weu_list.h"
 #include "weu_bitfield.h"
@@ -87,6 +79,7 @@ WEUDEF uint32_t weu_string_textLength(const char *text);
 //  COMPARISON
 
 WEUDEF bool weu_string_matches(const weu_string *s1, const weu_string *s2);
+WEUDEF bool weu_stringNA_matches(const weu_stringNA s1, const weu_stringNA s2);
 WEUDEF bool weu_string_textMatches(const char *text1, const char *text2);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  STRING
@@ -145,6 +138,20 @@ WEUDEF weu_stringNA weu_string_cutLineNA(weu_string *s);
 WEUDEF weu_list *weu_string_splitByChar(const weu_string *s, char c);
 WEUDEF weu_list *weu_string_splitByText(const weu_string *s, const char *text);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+//  CHAR REMOVAL
+
+WEUDEF void weu_string_removeChars(weu_string *s, char charToRemove);
+WEUDEF void weu_string_removeCharsFromBeg(weu_string *s, char charToRemove);
+WEUDEF void weu_string_removeCharsFromEnd(weu_string *s, char charToRemove);
+
+WEUDEF weu_string *weu_string_removedChars(const weu_string *s, char charToRemove);
+WEUDEF weu_string *weu_string_removedCharsFromBeg(const weu_string *s, char charToRemove);
+WEUDEF weu_string *weu_string_removedCharsFromEnd(const weu_string *s, char charToRemove);
+
+WEUDEF weu_stringNA weu_stringNA_removeChars(weu_stringNA s, char charToRemove);
+WEUDEF weu_stringNA weu_stringNA_removeCharsFromBeg(weu_stringNA s, char charToRemove);
+WEUDEF weu_stringNA weu_stringNA_removeCharsFromEnd(weu_stringNA s, char charToRemove);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 //  INDENTATION
 
 WEUDEF void weu_string_addIndent(weu_string *s, uint8_t count, uint8_t spaceCount);
@@ -162,7 +169,7 @@ isMatching - if passed reference to bitfield_32 sets successful varying string t
 
 #expression features
 %c - test single character
-%s - test string, reads testable string until \3 or STR_END/SE character, or \0
+%s - test string, reads testable string until \0 terminator char
 Returns as fail if string length is 
 
 #repeat tests
@@ -173,7 +180,8 @@ can specify single digit from 0 to 9 after percent sign and before identifier.
 
 #string end char
 For testing string, string end character can be specified
-as single character in brackets. 
+as single character in brackets.
+Up to five characters can be specified, rest will be ignored.
 #example - %s{;}[]
 
 test conditions should be in sqare brackets after char of string identifiers
@@ -346,6 +354,10 @@ bool weu_string_matches(const weu_string *s1, const weu_string *s2) {
     if (s1 == NULL || s2 == NULL) return 0;
     if (s1->length != s2->length) return 0;
     return strcmp(s1->text, s2->text) == 0 ? 1 : 0;
+}
+bool weu_stringNA_matches(const weu_stringNA s1, const weu_stringNA s2) {
+    if (s1.length != s2.length) return 0;
+     return strcmp(s1.text, s2.text) == 0 ? 1 : 0;
 }
 bool weu_string_textMatches(const char *text1, const char *text2) {
     return strcmp(text1, text2) == 0 ? 1 : 0;
@@ -765,6 +777,108 @@ weu_list *weu_string_splitByText(const weu_string *s, const char *text) {
     return out;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+//  CHAR REMOVAL
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void weu_string_removeChars(weu_string *s, char charToRemove) {
+    if (s == NULL) return;
+    uint32_t newLen = 0;
+    for (uint32_t i = 0; i < s->length; i++)
+    {
+        if (s->text[i] != charToRemove) {
+            s->text[newLen++] = s->text[i];
+        }
+    }
+    s->text[newLen] = '\0';
+    s->length = newLen;
+}
+void weu_string_removeCharsFromBeg(weu_string *s, char charToRemove) {
+    if (s == NULL) return;
+    uint32_t strStart = 0;
+    for (uint32_t i = 0; i < s->length; i++)
+    {
+        if (s->text[i] != charToRemove) {
+            break;
+        }
+        ++strStart;
+    }
+    memmove(s->text, s->text + strStart, s->length - strStart);
+    s->length = s->length - strStart;
+    s->text[s->length] = '\0';
+}
+void weu_string_removeCharsFromEnd(weu_string *s, char charToRemove) {
+    if (s == NULL) return;
+    uint32_t newLen = s->length;
+    for (int32_t i = s->length - 1; i >= 0; i--)
+    {
+        if (s->text[i] != charToRemove) {
+            break;
+        }
+        --newLen;
+    }
+    s->text[newLen] = '\0';
+    s->length = newLen;
+}
+
+weu_string *weu_string_removedChars(const weu_string *s, char charToRemove) {
+    if (s == NULL) return NULL;
+    weu_string *out = weu_string_copy(s);
+    weu_string_removeChars(out, charToRemove);
+    return out;
+}
+weu_string *weu_string_removedCharsFromBeg(const weu_string *s, char charToRemove) {
+    if (s == NULL) return NULL;
+    weu_string *out = weu_string_copy(s);
+    weu_string_removeCharsFromBeg(out, charToRemove);
+    return out;
+}
+weu_string *weu_string_removedCharsFromEnd(const weu_string *s, char charToRemove) {
+    if (s == NULL) return NULL;
+    weu_string *out = weu_string_copy(s);
+    weu_string_removeCharsFromEnd(out, charToRemove);
+    return out;
+}
+
+weu_stringNA weu_stringNA_removeChars(weu_stringNA s, char charToRemove) {
+    uint32_t newLen = 0;
+    for (uint32_t i = 0; i < s.length; i++)
+    {
+        if (s.text[i] != charToRemove) {
+            s.text[newLen++] = s.text[i];
+        }
+    }
+    s.text[newLen] = '\0';
+    s.length = newLen;
+    return s;
+}
+weu_stringNA weu_stringNA_removeCharsFromBeg(weu_stringNA s, char charToRemove) {
+    uint32_t strStart = 0;
+    for (uint32_t i = 0; i < s.length; i++)
+    {
+        if (s.text[i] != charToRemove) {
+            break;
+        }
+        ++strStart;
+    }
+    memmove(s.text, s.text + strStart, s.length - strStart);
+    s.length = s.length - strStart;
+    s.text[s.length] = '\0';
+    return s;
+}
+weu_stringNA weu_stringNA_removeCharsFromEnd(weu_stringNA s, char charToRemove) {
+    uint32_t newLen = s.length;
+    for (int32_t i = s.length - 1; i >= 0; i--)
+    {
+        if (s.text[i] != charToRemove) {
+            break;
+        }
+        --newLen;
+    }
+    s.text[newLen] = '\0';
+    s.length = newLen;
+    return s;
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 //  INDENTATION
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -883,11 +997,20 @@ bool weu_string_textMatchesExpression(const char *text, const char *expression, 
             }
             ++expPos;
             //  STRING READ END CONDITION
-            uint8_t strEnd = '\0';
-            if (expression[expPos] == '{' && expression[expPos + 2] == '}') {
-                strEnd = expression[expPos + 1];
-                expPos += 3;
+            uint8_t strEnd[6] = {0};
+            uint8_t endCount = 0;
+            if (expression[expPos] == '{') {
+                ++expPos;
+                while (expression[expPos] != '}' && expression[expPos] != '\0') {
+                    if (endCount < 5) {
+                        strEnd[endCount + 1] = expression[expPos];
+                        ++endCount;
+                    }
+                    ++expPos;
+                }
+                ++expPos;
             }
+            endCount += 1;
             //  CONDITION
             weu_stringNA condition = weu_stringNA_new("");
             if (expression[expPos] == '[') {
@@ -918,13 +1041,20 @@ bool weu_string_textMatchesExpression(const char *text, const char *expression, 
                 else {
                     // STRING LENGTH
                     uint32_t startPos = txtPos++;
-                    while (text[txtPos] != '\0' && text[txtPos] != strEnd && txtPos < textLen) {
+                    bool hitEndCh = false;
+                    while (!hitEndCh) {
+                        if (txtPos >= textLen) { break; }
+                        for (uint32_t i = 0; i < endCount; i++)
+                        {
+                            if (text[txtPos] == strEnd[i]) { hitEndCh = true; break; }
+                        }
+                        if (hitEndCh) break;
                         ++txtPos;
                     }
 
                     weu_stringNA str = weu_stringNA_textFromTo(text, startPos, txtPos);
                     //  Skip over string end char
-                    if (text[txtPos] == strEnd) ++expPos;
+                    if (hitEndCh) ++expPos;
                     
                     if (varyingStringOut) weu_list_push(varyingStringOut, weu_string_new(str.text));
                     if (!weu_string_textMatchesCondition(str.text, condition.text)) {
