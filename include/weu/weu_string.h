@@ -138,6 +138,12 @@ WEUDEF weu_stringNA weu_string_cutLineNA(weu_string *s);
 WEUDEF weu_list *weu_string_splitByChar(const weu_string *s, char c);
 WEUDEF weu_list *weu_string_splitByText(const weu_string *s, const char *text);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+//  CHAR REPLACE
+
+WEUDEF void weu_string_replaceChar(weu_string *s, char charToReplace, char newChar);
+WEUDEF weu_string *weu_string_replacedChar(const weu_string *s, char charToReplace, char newChar);
+WEUDEF weu_stringNA weu_stringNA_replaceChar(weu_stringNA s, char charToReplace, char newChar);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 //  CHAR REMOVAL
 
 WEUDEF void weu_string_removeChars(weu_string *s, char charToRemove);
@@ -774,6 +780,31 @@ weu_list *weu_string_splitByText(const weu_string *s, const char *text) {
         match = 0;
     }
     if (sbeg < s->length) weu_list_push(out, weu_string_fromTo(s, sbeg, s->length));
+    return out;
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  CHAR REPLACE
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void weu_string_replaceChar(weu_string *s, char charToReplace, char newChar) {
+    if (s == NULL) return;
+    for (uint32_t i = 0; i < s->length; i++)
+    {
+        if (s->text[i] == charToReplace) s->text[i] = newChar;
+    }
+}
+weu_string *weu_string_replacedChar(const weu_string *s, char charToReplace, char newChar) {
+    if (s == NULL) return NULL;
+    weu_string *cpy = weu_string_copy(s);
+    weu_string_replaceChar(cpy, charToReplace, newChar);
+    return cpy;
+}
+weu_stringNA weu_stringNA_replaceChar(weu_stringNA s, char charToReplace, char newChar) {
+    weu_stringNA out = s;
+    for (uint32_t i = 0; i < out.length; i++)
+    {
+        if (out.text[i] == charToReplace) out.text[i] = newChar;
+    }
     return out;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
