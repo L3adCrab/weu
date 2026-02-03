@@ -11,6 +11,11 @@
 //  #include <path_to_lib/weu_master.h>
 //
 //  To include all weu library in souce file at once, include weu_master.h
+/////////////////////////////////////////////////////////////////////////////////////
+//  USAGE
+//
+//  Save memory to array data.
+//  Not to be used to save pointers, for pointers use weu_list
 *////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef WEU_ARRAY_H
@@ -38,12 +43,16 @@ WEUDEF void weu_array_clear(weu_array *h);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  END
 
+//  Insert data at the end of the array
 WEUDEF void weu_array_push(weu_array *h, void *data);
+//  Remove data from the end of the array
 WEUDEF void weu_array_pop(weu_array *h, void *out);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  BEG
 
+//  Insert data at front of the array
 WEUDEF void weu_array_unshift(weu_array *h, void *data);
+//  Remove data at front of the array
 WEUDEF void weu_array_shift(weu_array *h, void *out);
 
 #ifdef WEU_IMPLEMENTATION

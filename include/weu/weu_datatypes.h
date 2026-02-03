@@ -57,7 +57,7 @@ typedef struct weu_string           { uint32_t length; char *text; uint32_t char
 // string no allocation
 // Stores up to 511 characters,
 // 512 including null terminator.
-typedef struct weu_stringNA         { uint32_t length; char text[512]; }                     weu_stringNA;
+typedef struct weu_stringNA         { uint32_t length; char text[512]; }                                weu_stringNA;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  LIST
 
@@ -66,7 +66,8 @@ typedef struct weu_array            { uint32_t count; uint32_t capacity; uint32_
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  PAIR
 
-typedef struct weu_pair             { void *v1, *v2; datafreefun d1, d2; }      weu_pair;
+typedef struct weu_pair             { void *v1, *v2; datafreefun d1, d2; }                      weu_pair;
+typedef struct weu_dataPair         { void *data; uint32_t dataSize1; uint32_t dataSize2; }     weu_dataPair;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  HASHTABLE
 

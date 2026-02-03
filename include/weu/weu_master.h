@@ -19,6 +19,7 @@
 #include "weu_array.h"
 #include "weu_bitfield.h"
 #include "weu_coroutine.h"
+#include "weu_datapair.h"
 #include "weu_hashtable.h"
 #include "weu_event.h"
 #include "weu_iobase.h"
