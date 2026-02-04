@@ -62,7 +62,7 @@ typedef struct weu_stringNA         { uint32_t length; char text[512]; }        
 //  LIST
 
 typedef struct weu_list             { uint32_t length; uint32_t capacity; void **data; datafreefun d; } weu_list;
-typedef struct weu_array            { uint32_t count; uint32_t capacity; uint32_t dataSize; void *data; } weu_array;
+typedef struct weu_array            { uint32_t count; uint32_t capacity; uint32_t dataSize; void *data; datafreefun d; } weu_array;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  PAIR
 
