@@ -13,10 +13,35 @@
 //
 //  To include all weu library in souce file at once, include weu_master.h
 /////////////////////////////////////////////////////////////////////////////////////
-//  USAGE
-//
-//  Save memory to pair data.
-//  Not to be used to save pointers, for pointers use weu_pair
+// EXAMPLE Create dataPair and set and getting data
+#include <stdio.h>
+
+#define WEU_IMPLEMENTATION
+#include "include/weu/weu_datapair.h"
+#include "include/weu/weu_string.h"
+
+int main() {
+    // allocate data
+    uint32_t        data1 = 47;
+    weu_string      *data2 = weu_string_new("test string");
+    printf("DATA TO BE SAVED\n");
+    printf("int - %i | str - %s\n", data1, data2->text);
+    
+    //  allocate pair and set data
+    weu_dataPair    *pair = weu_dataPair_new(sizeof(data1), sizeof(data2));
+    weu_dataPair_setData(pair, &data1, &data2);
+
+    //  get data
+    uint32_t        out1;
+    weu_string      *out2;
+    weu_dataPair_getData(pair, &out1, &out2);
+    printf("DATA RETRIEVED FROM PAIR\n");
+    printf("int - %i | str - %s\n", out1, out2->text);
+
+    //  free string and pair
+    weu_string_free(&out2);
+    weu_dataPair_free(&pair);
+}
 *////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef WEU_DATA_PAIR_H
@@ -43,12 +68,6 @@ WEUDEF void weu_dataPair_getData2(weu_dataPair *h, void *out);
 WEUDEF void weu_dataPair_setData(weu_dataPair *h, void *data1, void *data2);
 WEUDEF void weu_dataPair_setData1(weu_dataPair *h, void *data);
 WEUDEF void weu_dataPair_setData2(weu_dataPair *h, void *data);
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-//  RESIZE DATA
-
-WEUDEF void weu_dataPair_resizeData(weu_dataPair *h, uint32_t dataSize1, uint32_t dataSize2);
-WEUDEF void weu_dataPair_resizeData1(weu_dataPair *h, uint32_t dataSize);
-WEUDEF void weu_dataPair_resizeData2(weu_dataPair *h, uint32_t dataSize);
 
 #ifdef WEU_IMPLEMENTATION
 
@@ -58,6 +77,7 @@ WEUDEF void weu_dataPair_resizeData2(weu_dataPair *h, uint32_t dataSize);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  ALLOCATION
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+
 weu_dataPair *weu_dataPair_new(uint32_t dataSize_1, uint32_t dataSize_2) {
     weu_dataPair *out = (weu_dataPair*)malloc(sizeof(weu_dataPair));
     out->dataSize1 = dataSize_1;
@@ -73,9 +93,10 @@ void weu_dataPair_free(weu_dataPair **h) {
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  GET DATA
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void weu_dataPair_getData(weu_dataPair *h, void *out1, void *out2) {
-    if (h == NULL) { out1 = NULL; out2 = NULL; return; }
+    if (h == NULL) { printf("pair = null\n"); out1 = NULL; out2 = NULL; return; }
     memcpy(out1, h->data, h->dataSize1);
     memcpy(out2, h->data + h->dataSize1, h->dataSize2);
 }
@@ -89,47 +110,22 @@ void weu_dataPair_getData2(weu_dataPair *h, void *out) {
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  SET DATA
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void weu_dataPair_setData(weu_dataPair *h, void *data1, void *data2) {
-    if (h != NULL) return;
-    memcpy(h->data, data1, h->dataSize1);
-    memcpy(h->data + h->dataSize1, data2, h->dataSize2);
+    if (h == NULL) return;
+    weu_dataPair_setData1(h, data1);
+    weu_dataPair_setData2(h, data2);
 }
 void weu_dataPair_setData1(weu_dataPair *h, void *data) {
     if (h == NULL) return;
-    memcpy(h->data, data, h->dataSize1);
-    // h->data = data;
+    if (data == NULL)   memset(h->data, 0, h->dataSize1);
+    else                memcpy(h->data, data, h->dataSize1);
 }
 void weu_dataPair_setData2(weu_dataPair *h, void *data) {
     if (h == NULL) return;
-    memcpy(h->data + h->dataSize1, data, h->dataSize2);
-}
-/////////////////////////////////////////////////////////////////////////////////////////////////////
-//  RESIZE DATA
-
-void weu_dataPair_resizeData(weu_dataPair *h, uint32_t dataSize1, uint32_t dataSize2) {
-    if (h == NULL) return;
-    h->data = realloc(h->data, dataSize1 + dataSize2);
-    memset(h->data, 0, h->dataSize1 + h->dataSize2);
-}
-void weu_dataPair_resizeData1(weu_dataPair *h, uint32_t dataSize) {
-    if (h == NULL) return;
-    if (dataSize < h->dataSize1) {
-        memmove(h->data + dataSize, h->data + h->dataSize1, h->dataSize2);
-        h->data = realloc(h->data, dataSize + h->dataSize2);
-    }
-    else {
-        h->data = realloc(h->data, dataSize + h->dataSize2);
-        memmove(h->data + dataSize, h->data + h->dataSize1, h->dataSize2);
-    }
-    memset(h->data, 0, dataSize);
-    h->dataSize1 = dataSize;
-}
-void weu_dataPair_resizeData2(weu_dataPair *h, uint32_t dataSize) {
-    if (h == NULL) return;
-    h->dataSize2 = dataSize;
-    h->data = realloc(h->data, h->dataSize1 + dataSize);
-    memset(h->data + h->dataSize1, 0, dataSize);
+    if (data == NULL)   memset(h->data + h->dataSize1, 0, h->dataSize2);
+    else                memcpy(h->data + h->dataSize1, data, h->dataSize2);
 }
 
 #endif
