@@ -355,6 +355,7 @@ bool weu_stringNA_matches(const weu_stringNA s1, const weu_stringNA s2) {
      return strcmp(s1.text, s2.text) == 0 ? 1 : 0;
 }
 bool weu_string_textMatches(const char *text1, const char *text2) {
+    if (!text1 || !text2) return false;
     return strcmp(text1, text2) == 0 ? 1 : 0;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -734,7 +735,7 @@ weu_stringNA weu_string_cutLineNA(weu_string *s) {
 
 weu_list *weu_string_splitByChar(const weu_string *s, char c) {
     if (s == NULL) return NULL;
-    weu_list *out = weu_list_new(0, weu_string_listFree);
+    weu_list *out = weu_list_new(8, sizeof(weu_string*), weu_string_listFree);
     uint32_t sbeg = 0;
     for (uint32_t i = 0; i < s->length; i++) {
         if (s->text[i] == c) {
@@ -749,7 +750,7 @@ weu_list *weu_string_splitByChar(const weu_string *s, char c) {
 }
 weu_list *weu_string_splitByText(const weu_string *s, const char *text) {
     if (s == NULL || text == NULL) return NULL;
-    weu_list *out = weu_list_new(0, weu_string_listFree);
+    weu_list *out = weu_list_new(8, sizeof(weu_string*), weu_string_listFree);
     uint32_t textLen = strlen(text);
     uint32_t sbeg = 0;
     for (uint32_t i = 0; i < s->length; i++) {

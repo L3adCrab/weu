@@ -21,6 +21,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  DEFINES
+
+#define WEU_INDEX_INVALID 0xffffffff
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  MACROS
+
 #define SWAPVAR(A, B, TMP)  { TMP = B; B = A; A = TMP; }
 #define NUMMOD(N, M)        (N + (M - (N % M)))
 
@@ -61,8 +69,7 @@ typedef struct weu_stringNA         { uint32_t length; char text[512]; }        
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  LIST
 
-typedef struct weu_list             { uint32_t length; uint32_t capacity; void **data; datafreefun d; } weu_list;
-typedef struct weu_array            { uint32_t count; uint32_t capacity; uint32_t dataSize; void *data; datafreefun d; } weu_array;
+typedef struct weu_list            { uint32_t count; uint32_t capacity; uint32_t dataSize; void *data; datafreefun d; } weu_list;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  PAIR
 

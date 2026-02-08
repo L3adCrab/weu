@@ -16,7 +16,6 @@
 #ifndef weu_master_h
 #define weu_master_h
 
-#include "weu_array.h"
 #include "weu_bitfield.h"
 #include "weu_coroutine.h"
 #include "weu_datapair.h"
