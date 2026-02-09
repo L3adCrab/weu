@@ -51,7 +51,7 @@ WEUDEF weu_string weu_string_slice(const weu_string *s, uint32_t from, uint32_t 
 WEUDEF void weu_string_resize(weu_string *s, uint32_t length, char emptyFill);
 
 WEUDEF void weu_string_free(weu_string **data);
-WEUDEF void weu_string_listFree(void **data);
+WEUDEF void weu_string_datafreefun(void **data);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  NON ALLOC
 
@@ -289,7 +289,7 @@ void weu_string_free(weu_string **data) {
     free( *data);
     *data = NULL;
 }
-void weu_string_listFree(void **data) {
+void weu_string_datafreefun(void **data) {
     if (*data == NULL) return;
     free(((weu_string*)*data)->text);
     free((weu_string*)*data);
@@ -735,7 +735,7 @@ weu_stringNA weu_string_cutLineNA(weu_string *s) {
 
 weu_list *weu_string_splitByChar(const weu_string *s, char c) {
     if (s == NULL) return NULL;
-    weu_list *out = weu_list_new(8, sizeof(weu_string*), weu_string_listFree);
+    weu_list *out = weu_list_new(8, sizeof(weu_string*), weu_string_datafreefun);
     uint32_t sbeg = 0;
     for (uint32_t i = 0; i < s->length; i++) {
         if (s->text[i] == c) {
@@ -750,7 +750,7 @@ weu_list *weu_string_splitByChar(const weu_string *s, char c) {
 }
 weu_list *weu_string_splitByText(const weu_string *s, const char *text) {
     if (s == NULL || text == NULL) return NULL;
-    weu_list *out = weu_list_new(8, sizeof(weu_string*), weu_string_listFree);
+    weu_list *out = weu_list_new(8, sizeof(weu_string*), weu_string_datafreefun);
     uint32_t textLen = strlen(text);
     uint32_t sbeg = 0;
     for (uint32_t i = 0; i < s->length; i++) {

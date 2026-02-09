@@ -23,7 +23,7 @@ bool containsString(void *data1, void *data2);
 
 int main() {
     //  allocate array
-    weu_list *array = weu_list_new(15, sizeof(weu_string*), weu_string_listFree);
+    weu_list *array = weu_list_new(15, sizeof(weu_string*), weu_string_datafreefun);
 
     //  push data to array
     for (uint32_t i = 0; i < array->capacity; i++) 

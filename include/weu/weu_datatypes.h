@@ -61,20 +61,19 @@ typedef struct weu_bitfield_64seg   { char segmentCount; weu_bitfield_64 *b; }  
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  STRING
 
-typedef struct weu_string           { uint32_t length; char *text; uint32_t charPtrPos; uint32_t allocLength; }    weu_string;
+typedef struct weu_string           { uint32_t length; char *text; uint32_t charPtrPos, allocLength; }      weu_string;
 // string no allocation
 // Stores up to 511 characters,
 // 512 including null terminator.
-typedef struct weu_stringNA         { uint32_t length; char text[512]; }                                weu_stringNA;
+typedef struct weu_stringNA         { uint32_t length; char text[512]; }                                    weu_stringNA;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  LIST
 
-typedef struct weu_list            { uint32_t count; uint32_t capacity; uint32_t dataSize; void *data; datafreefun d; } weu_list;
+typedef struct weu_list             { uint32_t count, capacity, dataSize; void *data; datafreefun d; }      weu_list;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  PAIR
 
-typedef struct weu_pair             { void *v1, *v2; datafreefun d1, d2; }                      weu_pair;
-typedef struct weu_dataPair         { void *data; uint32_t dataSize1; uint32_t dataSize2; }     weu_dataPair;
+typedef struct weu_pair             { void *data; uint32_t dataSize1, dataSize2; datafreefun d1, d2; }      weu_pair;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  HASHTABLE
 
