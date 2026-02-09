@@ -2,51 +2,47 @@
 //  SPDX-License-Identifier: Unlicense
 /////////////////////////////////////////////////////////////////////////////////////
 //  USAGE
-//  By default functions are defined as extern.
+//  Functions are defined as extern.
 //  To implement somewhere in source file before including header file
 //  #define WEU_IMPLEMENTATION
-//  Implementation should be defined only once.
-//  
-//  For use as static functions before including header file
-//  #define WEU_STATIC
-//  There if no need to define WEU_IMPLEMENTATION when using as static,
-//  although WEU_STATIC will need to be somewhere defined in every source file where
-//  library will be used. To circumvent this and whole library will be used as static
-//  add the WEU_STATIC define to compiler (gcc/clang - -DWEU_STATIC)
+//  Implementation should be defined once.
+//
+//  #define WEU_IMPLEMENTATION
+//  #include <path_to_lib/weu_master.h>
+//
+//  To include all weu library in souce file at once, include weu_master.h
 *////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef weu_coroutine_h
 #define weu_coroutine_h
 
-#ifndef WEUCORDEF
-#define WEUCORDEF extern
-#endif
+#define WEUDEF extern
 
 #include <stdbool.h>
 
 typedef struct weu_coroutine {} weu_coroutine;
 typedef int (*enumeratorFun)(int, void*);
 
-WEUCORDEF bool weu_coroutineManager_initialize(int maxCoroutineCount);
-WEUCORDEF bool weu_coroutineManager_terminate(void);
+WEUDEF bool weu_coroutineManager_initialize(int maxCoroutineCount);
+WEUDEF bool weu_coroutineManager_terminate(void);
 
-WEUCORDEF bool weu_coroutineManager_iterate(void);
+WEUDEF bool weu_coroutineManager_iterate(void);
 
-WEUCORDEF bool weu_coroutineManager_active(void);
-WEUCORDEF int weu_coroutineManager_activeCount(void);
+WEUDEF bool weu_coroutineManager_active(void);
+WEUDEF int weu_coroutineManager_activeCount(void);
 
-WEUCORDEF weu_coroutine *weu_coroutine_new(enumeratorFun coroutineFunction, int lastPosition, void* passData, bool freeOnDone);
-WEUCORDEF bool weu_coroutine_free(weu_coroutine **cr);
+WEUDEF weu_coroutine *weu_coroutine_new(enumeratorFun coroutineFunction, int lastPosition, void* passData, bool freeOnDone);
+WEUDEF bool weu_coroutine_free(weu_coroutine **cr);
 
-WEUCORDEF bool weu_coroutine_start(weu_coroutine **cr);
-WEUCORDEF bool weu_coroutine_stop(weu_coroutine *cr);
+WEUDEF bool weu_coroutine_start(weu_coroutine **cr);
+WEUDEF bool weu_coroutine_stop(weu_coroutine *cr);
 
-WEUCORDEF int weu_coroutine_currentID(void);
-WEUCORDEF void weu_coroutine_stopCurrent(void);
+WEUDEF int weu_coroutine_currentID(void);
+WEUDEF void weu_coroutine_stopCurrent(void);
 
-WEUCORDEF int weu_yield_return_now(void);
-WEUCORDEF int weu_yield_return_waitForSeconds(double delay);
-WEUCORDEF int weu_yield_return_while(bool condition);
+WEUDEF int weu_yield_return_now(void);
+WEUDEF int weu_yield_return_waitForSeconds(double delay);
+WEUDEF int weu_yield_return_while(bool condition);
 
 #ifdef WEU_IMPLEMENTATION
 

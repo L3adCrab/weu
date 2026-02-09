@@ -2,32 +2,21 @@
 //  SPDX-License-Identifier: Unlicense
 /////////////////////////////////////////////////////////////////////////////////////
 //  USAGE
-//  By default functions are defined as extern.
+//  Functions are defined as extern.
 //  To implement somewhere in source file before including header file
 //  #define WEU_IMPLEMENTATION
-//  Implementation should be defined only once.
-//  
-//  For use as static functions before including header file
-//  #define WEU_STATIC
-//  There if no need to define WEU_IMPLEMENTATION when using as static,
-//  although WEU_STATIC will need to be somewhere defined in every source file where
-//  library will be used. To circumvent this and whole library will be used as static
-//  add the WEU_STATIC define to compiler (gcc/clang - -DWEU_STATIC)
+//  Implementation should be defined once.
 //
-//  To include all weu library in souce file at once, include weu_master.h  
+//  #define WEU_IMPLEMENTATION
+//  #include <path_to_lib/weu_master.h>
+//
+//  To include all weu library in souce file at once, include weu_master.h
 *////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef weu_string_h
 #define weu_string_h
 
-#ifndef WEUDEF
-    #ifdef WEU_STATIC
-    #define WEUDEF static
-    #define WEU_IMPLEMENTATION
-    #else
-    #define WEUDEF extern
-    #endif
-#endif
+#define WEUDEF extern
 
 #include "weu_datatypes.h"
 #include "weu_list.h"
@@ -62,7 +51,7 @@ WEUDEF weu_string weu_string_slice(const weu_string *s, uint32_t from, uint32_t 
 WEUDEF void weu_string_resize(weu_string *s, uint32_t length, char emptyFill);
 
 WEUDEF void weu_string_free(weu_string **data);
-WEUDEF void weu_string_listFree(void **data);
+WEUDEF void weu_string_datafreefun(void **data);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  NON ALLOC
 
@@ -79,6 +68,7 @@ WEUDEF uint32_t weu_string_textLength(const char *text);
 //  COMPARISON
 
 WEUDEF bool weu_string_matches(const weu_string *s1, const weu_string *s2);
+WEUDEF bool weu_stringNA_matches(const weu_stringNA s1, const weu_stringNA s2);
 WEUDEF bool weu_string_textMatches(const char *text1, const char *text2);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  STRING
@@ -136,6 +126,12 @@ WEUDEF weu_stringNA weu_string_cutLineNA(weu_string *s);
 
 WEUDEF weu_list *weu_string_splitByChar(const weu_string *s, char c);
 WEUDEF weu_list *weu_string_splitByText(const weu_string *s, const char *text);
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  CHAR REPLACE
+
+WEUDEF void weu_string_replaceChar(weu_string *s, char charToReplace, char newChar);
+WEUDEF weu_string *weu_string_replacedChar(const weu_string *s, char charToReplace, char newChar);
+WEUDEF weu_stringNA weu_stringNA_replaceChar(weu_stringNA s, char charToReplace, char newChar);
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 //  CHAR REMOVAL
 
@@ -293,7 +289,7 @@ void weu_string_free(weu_string **data) {
     free( *data);
     *data = NULL;
 }
-void weu_string_listFree(void **data) {
+void weu_string_datafreefun(void **data) {
     if (*data == NULL) return;
     free(((weu_string*)*data)->text);
     free((weu_string*)*data);
@@ -354,7 +350,12 @@ bool weu_string_matches(const weu_string *s1, const weu_string *s2) {
     if (s1->length != s2->length) return 0;
     return strcmp(s1->text, s2->text) == 0 ? 1 : 0;
 }
+bool weu_stringNA_matches(const weu_stringNA s1, const weu_stringNA s2) {
+    if (s1.length != s2.length) return 0;
+     return strcmp(s1.text, s2.text) == 0 ? 1 : 0;
+}
 bool weu_string_textMatches(const char *text1, const char *text2) {
+    if (!text1 || !text2) return false;
     return strcmp(text1, text2) == 0 ? 1 : 0;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -734,7 +735,7 @@ weu_stringNA weu_string_cutLineNA(weu_string *s) {
 
 weu_list *weu_string_splitByChar(const weu_string *s, char c) {
     if (s == NULL) return NULL;
-    weu_list *out = weu_list_new(0, weu_string_listFree);
+    weu_list *out = weu_list_new(8, sizeof(weu_string*), weu_string_datafreefun);
     uint32_t sbeg = 0;
     for (uint32_t i = 0; i < s->length; i++) {
         if (s->text[i] == c) {
@@ -749,7 +750,7 @@ weu_list *weu_string_splitByChar(const weu_string *s, char c) {
 }
 weu_list *weu_string_splitByText(const weu_string *s, const char *text) {
     if (s == NULL || text == NULL) return NULL;
-    weu_list *out = weu_list_new(0, weu_string_listFree);
+    weu_list *out = weu_list_new(8, sizeof(weu_string*), weu_string_datafreefun);
     uint32_t textLen = strlen(text);
     uint32_t sbeg = 0;
     for (uint32_t i = 0; i < s->length; i++) {
@@ -769,6 +770,31 @@ weu_list *weu_string_splitByText(const weu_string *s, const char *text) {
         match = 0;
     }
     if (sbeg < s->length) weu_list_push(out, weu_string_fromTo(s, sbeg, s->length));
+    return out;
+}
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+//  CHAR REPLACE
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void weu_string_replaceChar(weu_string *s, char charToReplace, char newChar) {
+    if (s == NULL) return;
+    for (uint32_t i = 0; i < s->length; i++)
+    {
+        if (s->text[i] == charToReplace) s->text[i] = newChar;
+    }
+}
+weu_string *weu_string_replacedChar(const weu_string *s, char charToReplace, char newChar) {
+    if (s == NULL) return NULL;
+    weu_string *cpy = weu_string_copy(s);
+    weu_string_replaceChar(cpy, charToReplace, newChar);
+    return cpy;
+}
+weu_stringNA weu_stringNA_replaceChar(weu_stringNA s, char charToReplace, char newChar) {
+    weu_stringNA out = s;
+    for (uint32_t i = 0; i < out.length; i++)
+    {
+        if (out.text[i] == charToReplace) out.text[i] = newChar;
+    }
     return out;
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////
