@@ -71,6 +71,16 @@ typedef struct weu_stringNA         { uint32_t length; char text[512]; }        
 
 typedef struct weu_list             { uint32_t count, capacity, dataSize; void *data; datafreefun d; }      weu_list;
 /////////////////////////////////////////////////////////////////////////////////////////////////////
+//  LINKED LIST
+
+//  Unrolled linked list
+typedef struct weu_URLListNode      {
+    void *prev, *next; 
+    uint32_t count, capacity, dataSize; 
+    void *data; 
+    datafreefun d; 
+}   weu_URLListNode;
+/////////////////////////////////////////////////////////////////////////////////////////////////////
 //  PAIR
 
 typedef struct weu_pair             { void *data; uint32_t dataSize1, dataSize2; datafreefun d1, d2; }      weu_pair;
